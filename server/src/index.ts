@@ -18,6 +18,20 @@ const typeDefs = /* GraphQL */ `
   }
 `
 
+// ミューテーションの引数の型を定義
+interface AddTodoArgs {
+  text: string;
+}
+
+interface UpdateTodoArgs {
+  id: string;
+  completed: boolean;
+}
+
+interface DeleteTodoArgs {
+  id: string;
+}
+
 // インメモリのデータストア
 let todos = [
   { id: '1', text: 'Learn GraphQL', completed: true },
@@ -31,12 +45,12 @@ const resolvers = {
     todos: () => todos,
   },
   Mutation: {
-    addTodo: (_, { text }) => {
+    addTodo: (_: unknown, { text }: AddTodoArgs) => {
       const newTodo = { id: String(nextId++), text, completed: false }
       todos.push(newTodo)
       return newTodo
     },
-    updateTodo: (_, { id, completed }) => {
+    updateTodo: (_: unknown, { id, completed }: UpdateTodoArgs) => {
       const todo = todos.find(t => t.id === id)
       if (todo) {
         todo.completed = completed
@@ -44,7 +58,7 @@ const resolvers = {
       }
       return null
     },
-    deleteTodo: (_, { id }) => {
+    deleteTodo: (_: unknown, { id }: DeleteTodoArgs) => {
       const index = todos.findIndex(t => t.id === id)
       if (index > -1) {
         todos.splice(index, 1)
