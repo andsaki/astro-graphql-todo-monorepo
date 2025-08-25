@@ -1,18 +1,16 @@
-import xs from 'xstream'; // xstream: Cycle.jsで非同期なデータフロー（ストリーム）を扱うためのライブラリ
-import { div, ul, li, h1, span } from '@cycle/dom';
-import { GraphQLClient, gql } from 'graphql-request';
+import { VNode } from '@cycle/dom';
+import { Stream } from 'xstream';
+import xs from 'xstream';
+import { div, ul, li, h1, span, MainDOMSource } from '@cycle/dom';
+import { request as graphqlRequest, gql, GraphQLClient } from 'graphql-request';
 
-// Todoの型定義
+// --- GraphQLと型の定義 ---
 interface Todo {
   id: string;
   text: string;
   completed: boolean;
 }
-
-// 1. GraphQLクライアントを作成
 const client = new GraphQLClient('http://localhost:4000/graphql');
-
-// 2. クエリを定義
 const getTodosQuery = gql`
   query {
     todos {
@@ -22,99 +20,137 @@ const getTodosQuery = gql`
     }
   }
 `;
+const updateTodoMutation = gql`
+  mutation UpdateTodo($id: ID!, $completed: Boolean!) {
+    updateTodo(id: $id, completed: $completed) {
+      id
+      text
+      completed
+    }
+  }
+`;
 
-// Viewを生成するヘルパー関数
-function view(todos: Todo[]) {
-    return div([
-        h1('Todo List'),
-        ul(todos.map(todo =>
-            // todo.completedの状態に応じて、.completedクラスを動的に追加
-            li(`.todo-item ${todo.completed ? '.completed' : ''}`, [
-                span(todo.text),
-                span(todo.completed ? '✓' : '✗') // チェックマークもspanで囲む
-            ])
-        ))
-    ]);
+// --- 型定義の強化 (Discriminated Union) ---
+// APIレスポンスの型を厳密に定義
+interface GetTodosResponse {
+  category: 'getTodos';
+  todos: Todo[];
+}
+interface UpdateTodoResponse {
+  category: 'updateTodo';
+  updateTodo: Todo;
+}
+// 2つのレスポンス型の合併型
+type ApiResponse = GetTodosResponse | UpdateTodoResponse;
+
+// Stateを更新するためのReducer関数の型
+type Reducer = (prevTodos?: Todo[]) => Todo[] | undefined;
+
+// Cycle.jsアプリの型定義
+type AppSources = {
+  DOM: MainDOMSource;
+};
+type AppSinks = {
+  DOM: Stream<VNode>;
+};
+
+// --- View: Stateを元にVDOMを生成する ---
+function view(todos: Todo[]): VNode {
+  return div([
+    h1('Todo List'),
+    ul(
+      todos.map(todo =>
+        li(
+          `.todo-item ${todo.completed ? '.completed' : ''}`,
+          { dataset: { id: todo.id } },
+          [span(todo.text), span(todo.completed ? '✓' : '✗')]
+        )
+      )
+    ),
+  ]);
 }
 
-export function App() {
-  // 3. GraphQLリクエストのPromiseからストリームを作成
-  const response$ = xs.fromPromise(client.request<{ todos: Todo[] }>(getTodosQuery));
+// --- App: メインのアプリケーションロジック ---
+export function App(sources: AppSources): AppSinks {
+  const proxyTodos$ = xs.create<Todo[]>();
 
-  // 4. VDOMストリームを作成
-  //    xstreamのオペレータを使い、非同期処理の状態に応じて表示するVDOMを切り替える
-  const vdom$ = response$
-    // 【成功時】Promiseが成功裡に解決されると、レスポンスデータがここに流れてくる
-    // view()ヘルパー関数を使って、TodoリストのVDOMに変換する
-    .map(data => view(data.todos))
-    // 【失敗時】Promiseがrejectされるなど、ストリームでエラーが発生した場合に、この処理が実行される
-    // エラーをキャッチし、代わりに「エラーメッセージのVDOMを流す新しいストリーム」に差し替える
-    .replaceError(() => xs.of(div(['Error loading todos'])))
-    // 【初期表示】ストリームが開始すると、まず最初に同期的にこの値が流れる
-    // 非同期処理（APIリクエスト）の完了を待たずに、即座に「Loading...」表示を実現する
-    .startWith(div(['Loading...'])); // 初期VDOM
+  // --- INTENT (ユーザーの操作) ---
+  const toggleTodoId$ = sources.DOM.select('.todo-item')
+    .events('click')
+    .map(ev => (ev.currentTarget as HTMLElement).dataset.id as string);
+
+  // --- MODEL (状態管理とロジック) ---
+  const getTodosRequest$ = xs.of({
+    query: getTodosQuery,
+    variables: {},
+    category: 'getTodos' as const, // as constでリテラル型として推論させる
+  });
+
+  const updateTodoRequest$ = toggleTodoId$
+    .map(id =>
+      proxyTodos$.take(1).map(todos => {
+        const todo = todos.find(t => t.id === id);
+        return {
+          query: updateTodoMutation,
+          variables: { id, completed: !todo?.completed },
+          category: 'updateTodo' as const,
+        };
+      })
+    )
+    .flatten();
+
+  const request$ = xs.merge(getTodosRequest$, updateTodoRequest$);
+
+  // 2. APIリクエストを送り、レスポンスのストリームを作成する
+  const response$: Stream<ApiResponse> = request$
+    .map(req =>
+      xs
+        .fromPromise(
+          graphqlRequest<{ todos: Todo[] } | { updateTodo: Todo }>(
+            'http://localhost:4000/graphql',
+            req.query,
+            req.variables
+          )
+        )
+        .map(res => {
+          // categoryの値に応じて、判別可能な合併型のオブジェクトを正しく構築する
+          if (req.category === 'getTodos') {
+            return { ...res, category: 'getTodos' } as GetTodosResponse;
+          }
+          return { ...res, category: 'updateTodo' } as UpdateTodoResponse;
+        })
+    )
+    .flatten();
+
+  // 3. レスポンスを元に、Stateを更新するためのReducerストリームを作成する
+  const reducer$ = response$.map(responseObject => {
+    // if文でチェックすると、TypeScriptがresponseObjectの型を正しく推論してくれる
+    if (responseObject.category === 'getTodos') {
+      return function getTodosReducer(_prev?: Todo[]): Todo[] {
+        return responseObject.todos; // 安全なアクセス
+      };
+    }
+    // このブロックでは、responseObjectはUpdateTodoResponse型だと確定している
+    return function updateTodoReducer(prev?: Todo[]): Todo[] {
+      const updatedTodo = responseObject.updateTodo; // 安全なアクセス
+      return prev?.map(t => (t.id === updatedTodo.id ? updatedTodo : t)) ?? [];
+    };
+  });
+
+  // 4. Reducerを使って、アプリケーションのStateストリームを生成する
+  const todos$ = reducer$.fold<Todo[] | undefined>(
+    (prev, reducer) => reducer(prev),
+    undefined
+  );
+
+  proxyTodos$.imitate(todos$.filter(todos => !!todos) as Stream<Todo[]>);
+
+  // --- VIEW (VDOMの生成) ---
+  const vdom$ = todos$.map(todos =>
+    todos ? view(todos) : div('Loading...')
+  );
 
   return {
     DOM: vdom$,
   };
 }
-
-/*
-// --- 参考：同じ機能を一般的なReact Hooksで書いた場合のコード例 ---
-
-import React, { useState, useEffect } from 'react';
-// import { GraphQLClient, gql } from 'graphql-request'; // 同ファイルでインポート済み
-
-// React Hooksを使ったTodoリストコンポーネント
-export function TodoList() {
-  // 3つの状態を定義
-  const [todos, setTodos] = useState<Todo[]>([]);         // データ
-  const [loading, setLoading] = useState<boolean>(true);  // ローディング中か
-  const [error, setError] = useState<Error | null>(null); // エラー
-
-  // 副作用（今回はAPIリクエスト）を実行するためのHook
-  useEffect(() => {
-    const fetchTodos = async () => {
-      try {
-        // データをリセットし、ローディング開始
-        setError(null);
-        setLoading(true);
-        
-        const data = await client.request<{ todos: Todo[] }>(getTodosQuery);
-        setTodos(data.todos);
-
-      } catch (err) {
-        setError(err as Error);
-      } finally {
-        // ローディング終了
-        setLoading(false);
-      }
-    };
-
-    fetchTodos();
-  }, []); // 第2引数の配列が空なので、この処理はコンポーネントが最初に表示された時に1度だけ実行される
-
-  // --- 状態に応じたUIの出し分け ---
-  if (loading) {
-    return <div>Loading...</div>;
-  }
-
-  if (error) {
-    return <div>Error: {error.message}</div>;
-  }
-
-  return (
-    <div>
-      <h1>Todo List</h1>
-      <ul>
-        {todos.map(todo => (
-          <li key={todo.id}>
-            {todo.text} {todo.completed ? '✓' : ''}
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
-
-*/
