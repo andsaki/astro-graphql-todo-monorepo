@@ -1,0 +1,23 @@
+{
+  "name": "client",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@cycle/dom": "^23.1.0",
+    "@cycle/run": "^5.7.0",
+    "@cycle/react": "^1.0.0-rc.6",
+    "graphql": "^16.8.1",
+    "graphql-request": "^7.0.1",
+    "xstream": "^11.14.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.2.2",
+    "vite": "^5.2.0"
+  }
+}
