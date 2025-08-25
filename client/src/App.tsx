@@ -114,7 +114,7 @@ export function App(sources: AppSources): AppSinks {
 
   const updateTodoRequest$: Stream<UpdateTodoRequestPayload> = toggleTodoId$
     .map((id) =>
-      proxyTodos$.take(1).map((todos) => {
+      proxyTodos$.take(1).map((todos): UpdateTodoRequestPayload => {
         const todo = todos.find((t) => t.id === id);
         return {
           query: updateTodoMutation,
