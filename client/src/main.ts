@@ -1,3 +1,4 @@
+import './styles/main.scss';
 import { run } from '@cycle/run'
 import { makeDOMDriver } from '@cycle/dom'
 import { App } from './App'

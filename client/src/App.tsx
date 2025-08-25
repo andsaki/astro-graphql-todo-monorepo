@@ -1,5 +1,5 @@
 import xs from 'xstream'; // xstream: Cycle.jsで非同期なデータフロー（ストリーム）を扱うためのライブラリ
-import { div, ul, li, h1 } from '@cycle/dom';
+import { div, ul, li, h1, span } from '@cycle/dom';
 import { GraphQLClient, gql } from 'graphql-request';
 
 // Todoの型定義
@@ -27,7 +27,13 @@ const getTodosQuery = gql`
 function view(todos: Todo[]) {
     return div([
         h1('Todo List'),
-        ul(todos.map(todo => li(`${todo.text} ${todo.completed ? '✓' : ''}`)))
+        ul(todos.map(todo =>
+            // todo.completedの状態に応じて、.completedクラスを動的に追加
+            li(`.todo-item ${todo.completed ? '.completed' : ''}`, [
+                span(todo.text),
+                span(todo.completed ? '✓' : '✗') // チェックマークもspanで囲む
+            ])
+        ))
     ]);
 }
 

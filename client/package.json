@@ -10,13 +10,14 @@
   },
   "dependencies": {
     "@cycle/dom": "^23.1.0",
-    "@cycle/run": "^5.7.0",
     "@cycle/react": "^1.0.0-rc.6",
+    "@cycle/run": "^5.7.0",
     "graphql": "^16.8.1",
     "graphql-request": "^7.0.1",
     "xstream": "^11.14.0"
   },
   "devDependencies": {
+    "sass": "^1.90.0",
     "typescript": "^5.2.2",
     "vite": "^5.2.0"
   }
