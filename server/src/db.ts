@@ -5,7 +5,7 @@ import type { ColumnType } from 'kysely';
 interface TodoTable {
   id: ColumnType<number, never, never>;
   text: string;
-  completed: ColumnType<boolean, boolean, boolean>;
+  completed: ColumnType<boolean, number, number>; // Changed here
 }
 
 export interface DatabaseSchema {
