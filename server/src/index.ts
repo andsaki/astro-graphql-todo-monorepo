@@ -1,5 +1,6 @@
 import { createYoga, createSchema } from 'graphql-yoga'
 import { createServer } from 'node:http'
+import { db } from './db' // Import the Kysely instance
 
 // 1. スキーマを定義する
 const typeDefs = /* GraphQL */ `
@@ -32,39 +33,28 @@ interface DeleteTodoArgs {
   id: string;
 }
 
-// インメモリのデータストア
-let todos = [
-  { id: '1', text: 'Learn GraphQL', completed: true },
-  { id: '2', text: 'Build a Cycle.js app', completed: false },
-]
-let nextId = 3
-
 // 2. リゾルバを定義する
 const resolvers = {
   Query: {
-    todos: () => todos,
+    todos: async () => {
+      return await db.selectFrom('todos').selectAll().execute();
+    },
   },
   Mutation: {
-    addTodo: (_: unknown, { text }: AddTodoArgs) => {
-      const newTodo = { id: String(nextId++), text, completed: false }
-      todos.push(newTodo)
-      return newTodo
+    addTodo: async (_: unknown, { text }: AddTodoArgs) => {
+      const result = await db.insertInto('todos').values({ text, completed: 0 }).execute(); // Convert false to 0
+      const newTodoId = result.insertId; // Get the last inserted ID
+      const newTodo = await db.selectFrom('todos').where('id', '=', newTodoId).selectAll().executeTakeFirstOrThrow();
+      return { ...newTodo, id: String(newTodo.id) };
     },
-    updateTodo: (_: unknown, { id, completed }: UpdateTodoArgs) => {
-      const todo = todos.find(t => t.id === id)
-      if (todo) {
-        todo.completed = completed
-        return todo
-      }
-      return null
+    updateTodo: async (_: unknown, { id, completed }: UpdateTodoArgs) => {
+      await db.updateTable('todos').set({ completed: completed ? 1 : 0 }).where('id', '=', parseInt(id)).execute(); // Convert boolean to 0 or 1
+      const updatedTodo = await db.selectFrom('todos').where('id', '=', parseInt(id)).selectAll().executeTakeFirst();
+      return updatedTodo ? { ...updatedTodo, id: String(updatedTodo.id) } : null;
     },
-    deleteTodo: (_: unknown, { id }: DeleteTodoArgs) => {
-      const index = todos.findIndex(t => t.id === id)
-      if (index > -1) {
-        todos.splice(index, 1)
-        return true
-      }
-      return false
+    deleteTodo: async (_: unknown, { id }: DeleteTodoArgs) => {
+      const result = await db.deleteFrom('todos').where('id', '=', parseInt(id)).executeTakeFirst();
+      return result.numDeletedRows > 0;
     }
   }
 }
