@@ -1,7 +1,16 @@
 import { VNode } from "@cycle/dom";
-import { Stream } from "xstream";
+import { Stream, MemoryStream } from "xstream";
 import xs from "xstream";
-import { div, ul, li, h1, span, MainDOMSource } from "@cycle/dom";
+import {
+  div,
+  ul,
+  li,
+  h1,
+  span,
+  input,
+  button,
+  MainDOMSource,
+} from "@cycle/dom";
 import { request as graphqlRequest } from "graphql-request";
 import { isDefined } from "./utils/isDefined";
 
@@ -9,8 +18,10 @@ import {
   TodoFragmentFragment,
   GetTodosDocument,
   UpdateTodoDocument,
+  AddTodoDocument,
   GetTodosQuery,
   UpdateTodoMutation,
+  AddTodoMutation,
 } from "../generated/types";
 
 // --- GraphQLと型の定義 ---
@@ -37,8 +48,18 @@ type UpdateTodoResponse = {
     completed: boolean;
   } | null;
 };
+type AddTodoResponse = {
+  category: "addTodo";
+  __typename?: "Mutation";
+  addTodo?: {
+    __typename?: "Todo";
+    id: string;
+    text: string;
+    completed: boolean;
+  } | null;
+};
 
-type ApiResponse = GetTodosResponse | UpdateTodoResponse;
+type ApiResponse = GetTodosResponse | UpdateTodoResponse | AddTodoResponse;
 
 // Request Payload Types
 interface GetTodosRequestPayload {
@@ -53,7 +74,16 @@ interface UpdateTodoRequestPayload {
   category: "updateTodo";
 }
 
-type RequestPayload = GetTodosRequestPayload | UpdateTodoRequestPayload;
+interface AddTodoRequestPayload {
+  query: typeof AddTodoDocument;
+  variables: { text: string };
+  category: "addTodo";
+}
+
+type RequestPayload =
+  | GetTodosRequestPayload
+  | UpdateTodoRequestPayload
+  | AddTodoRequestPayload;
 
 // Cycle.jsアプリの型定義
 type AppSources = {
@@ -63,22 +93,6 @@ type AppSources = {
 type AppSinks = {
   DOM: Stream<VNode>;
 };
-
-// --- View: Stateを元にVDOMを生成する ---
-function view(todos: Todo[]): VNode {
-  return div([
-    h1("Todo List"),
-    ul(
-      todos.map((todo) =>
-        li(
-          `.todo-item ${todo.completed ? ".completed" : ""}`,
-          { dataset: { id: todo.id } },
-          [span(todo.text), span(todo.completed ? "✓" : "✗")]
-        )
-      )
-    ),
-  ]);
-}
 
 // --- App: メインのアプリケーションロジック ---
 export function App(sources: AppSources): AppSinks {
@@ -95,6 +109,17 @@ export function App(sources: AppSources): AppSinks {
       return undefined;
     })
     .filter(isDefined);
+
+  const newTodoText$: MemoryStream<string> = sources.DOM.select(
+    ".new-todo-input"
+  )
+    .events("input")
+    .map((ev) => (ev.target as HTMLInputElement).value)
+    .startWith("");
+
+  const addTodoClick$ = sources.DOM.select(".add-todo-button")
+    .events("click")
+    .mapTo(true);
 
   // --- MODEL (状態管理とロジック) ---
   const getTodosRequest$: Stream<GetTodosRequestPayload> = xs.of({
@@ -116,9 +141,21 @@ export function App(sources: AppSources): AppSinks {
     )
     .flatten();
 
+  const addTodoRequest$: Stream<AddTodoRequestPayload> = xs
+    .combine(newTodoText$, addTodoClick$)
+    .filter(([text, clicked]) => clicked && text.trim().length > 0)
+    .map(
+      ([text]): AddTodoRequestPayload => ({
+        query: AddTodoDocument,
+        variables: { text },
+        category: "addTodo",
+      })
+    );
+
   const request$: Stream<RequestPayload> = xs.merge(
     getTodosRequest$,
-    updateTodoRequest$
+    updateTodoRequest$,
+    addTodoRequest$
   );
 
   // 2. APIリクエストを送り、レスポンスのストリームを作成する
@@ -132,13 +169,21 @@ export function App(sources: AppSources): AppSinks {
             req.variables
           ).then((res): ApiResponse => ({ ...res, category: "getTodos" }))
         );
-      } else {
+      } else if (req.category === "updateTodo") {
         return xs.fromPromise(
           graphqlRequest<UpdateTodoMutation>(
             "http://localhost:4000/graphql",
             UpdateTodoDocument,
             req.variables
           ).then((res): ApiResponse => ({ ...res, category: "updateTodo" }))
+        );
+      } else {
+        return xs.fromPromise(
+          graphqlRequest<AddTodoMutation>(
+            "http://localhost:4000/graphql",
+            AddTodoDocument,
+            req.variables
+          ).then((res): ApiResponse => ({ ...res, category: "addTodo" }))
         );
       }
     })
@@ -150,13 +195,19 @@ export function App(sources: AppSources): AppSinks {
       return function getTodosReducer(_prev?: Todo[]): Todo[] {
         return responseObject.todos;
       };
+    } else if (responseObject.category === "updateTodo") {
+      return function updateTodoReducer(prev?: Todo[]): Todo[] {
+        const updatedTodo = responseObject.updateTodo as TodoFragmentFragment;
+        return (
+          prev?.map((t) => (t.id === updatedTodo.id ? updatedTodo : t)) ?? []
+        );
+      };
+    } else {
+      return function addTodoReducer(prev?: Todo[]): Todo[] {
+        const newTodo = responseObject.addTodo as TodoFragmentFragment;
+        return [...(prev ?? []), newTodo];
+      };
     }
-    return function updateTodoReducer(prev?: Todo[]): Todo[] {
-      const updatedTodo = responseObject.updateTodo as TodoFragmentFragment;
-      return (
-        prev?.map((t) => (t.id === updatedTodo.id ? updatedTodo : t)) ?? []
-      );
-    };
   });
 
   // 4. Reducerを使って、アプリケーションのStateストリームを生成する
@@ -167,10 +218,40 @@ export function App(sources: AppSources): AppSinks {
 
   proxyTodos$.imitate(todos$.filter(isDefined));
 
-  // --- VIEW (VDOMの生成) ---
-  const vdom$ = todos$.map((todos) =>
-    todos ? view(todos) : div("Loading...")
+  // Clear input field after adding todo
+  const clearInput$ = response$
+    .filter((res) => res.category === "addTodo")
+    .mapTo("");
+
+  const inputDOM$ = xs.merge(newTodoText$, clearInput$).map((text) =>
+    input(".new-todo-input", {
+      attrs: { type: "text", placeholder: "Add new todo", value: text },
+    })
   );
+
+  // --- VIEW (VDOMの生成) ---
+  const vdom$ = xs
+    .combine(todos$, inputDOM$)
+    .map(([todos, inputVNode]) =>
+      todos
+        ? div([
+            h1("Todo List"),
+            div(".add-todo-form", [
+              inputVNode,
+              button(".add-todo-button", "Add Todo"),
+            ]),
+            ul(
+              todos.map((todo) =>
+                li(
+                  `.todo-item ${todo.completed ? ".completed" : ""}`,
+                  { dataset: { id: todo.id } },
+                  [span(todo.text), span(todo.completed ? "✓" : "✗")]
+                )
+              )
+            ),
+          ])
+        : div("Loading...")
+    );
 
   return {
     DOM: vdom$,
