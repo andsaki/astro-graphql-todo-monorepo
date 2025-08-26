@@ -1,0 +1,130 @@
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  background: linear-gradient(to right, #ece9e6, #ffffff);
+  color: #444;
+  padding: 1rem;
+  line-height: 1.7;
+}
+
+main {
+  max-width: 580px;
+  margin: 3rem auto;
+  background: rgba(255, 255, 255, 0.85);
+  padding: 2rem 2.5rem;
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+h1 {
+  text-align: center;
+  color: #2c3e50;
+  font-weight: 700;
+  margin-bottom: 2rem;
+  letter-spacing: -0.5px;
+}
+
+ul {
+  list-style: none;
+  padding: 0;
+}
+
+li {
+  display: flex;
+  align-items: center;
+  padding: 0.8rem 0.5rem;
+  border-bottom: 1px solid #e8e8e8;
+  transition: background-color 0.2s ease-in-out;
+}
+
+li:hover {
+  background-color: #f9f9f9;
+}
+
+li:last-child {
+  border-bottom: none;
+}
+
+input[type="checkbox"] {
+  appearance: none;
+  width: 22px;
+  height: 22px;
+  border: 2px solid #ccc;
+  border-radius: 50%;
+  margin-right: 1rem;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.2s ease-in-out;
+}
+
+input[type="checkbox"]:checked {
+  background-color: #2ecc71;
+  border-color: #2ecc71;
+}
+
+input[type="checkbox"]:checked::after {
+  content: '\2713';
+  color: white;
+  font-size: 14px;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+
+button {
+  background: transparent;
+  color: #e74c3c;
+  border: none;
+  padding: 0.4rem 0.8rem;
+  font-size: 1.1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-left: auto;
+  opacity: 0.5;
+  transition: opacity 0.2s ease-in-out;
+}
+
+li:hover button {
+    opacity: 1;
+}
+
+button:hover {
+    color: #c0392b;
+}
+
+form {
+  display: flex;
+  margin-bottom: 2.5rem;
+}
+
+input[type="text"] {
+  flex-grow: 1;
+  padding: 0.8rem 1rem;
+  border: 1px solid #dcdcdc;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+input[type="text"]:focus {
+  outline: none;
+  border-color: #3498db;
+  box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.15);
+}
+
+form button {
+  background: #3498db;
+  color: white;
+  margin-left: 0.75rem;
+  font-weight: 600;
+  opacity: 1;
+}
+
+form button:hover {
+    background: #2980b9;
+    color: white;
+}

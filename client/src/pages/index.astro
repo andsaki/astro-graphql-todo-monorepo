@@ -1,0 +1,10 @@
+---
+import Layout from '../layouts/Layout.astro';
+import TodoList from '../components/TodoList.tsx';
+---
+
+<Layout title="Todo App">
+  <main>
+    <TodoList client:load />
+  </main>
+</Layout>

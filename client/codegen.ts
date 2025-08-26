@@ -1,24 +1,16 @@
-import type { CodegenConfig } from "@graphql-codegen/cli";
+
+import type { CodegenConfig } from '@graphql-codegen/cli';
 
 const config: CodegenConfig = {
   overwrite: true,
-  schema: "http://localhost:4000/graphql", // Assuming server is running here
-  documents: ["src/graphql/**/*.graphql"],
+  schema: 'http://localhost:4000/graphql',
+  documents: ['src/**/*.astro', 'src/**/*.tsx'],
   generates: {
-    "./generated/types.ts": {
-      // Generate all types into a single types.ts file
-      plugins: [
-        "typescript",
-        "typescript-operations",
-        "typescript-graphql-request",
-      ],
-      config: {
-        documentMode: "string",
-      },
+    'src/generated/types.ts': {
+      plugins: ['typescript', 'typescript-operations', 'typescript-graphql-request'],
     },
-    "./generated/schema.json": {
-      // Generate introspection schema as JSON
-      plugins: ["introspection"],
+    'src/generated/schema.json': {
+      plugins: ['introspection'],
     },
   },
 };
