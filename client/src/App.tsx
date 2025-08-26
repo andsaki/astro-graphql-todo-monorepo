@@ -3,6 +3,7 @@ import { Stream } from "xstream";
 import xs from "xstream";
 import { div, ul, li, h1, span, MainDOMSource } from "@cycle/dom";
 import { request as graphqlRequest } from "graphql-request";
+import { isDefined } from "./utils/isDefined";
 
 import {
   TodoFragmentFragment,
@@ -11,11 +12,6 @@ import {
   GetTodosQuery,
   UpdateTodoMutation,
 } from "../generated/types";
-
-// --- Helper Functions ---
-function isDefined<T>(val: T | undefined): val is T {
-  return val !== undefined;
-}
 
 // --- GraphQLと型の定義 ---
 type Todo = TodoFragmentFragment;
