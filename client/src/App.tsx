@@ -2,7 +2,15 @@ import { VNode } from "@cycle/dom";
 import { Stream } from "xstream";
 import xs from "xstream";
 import { div, ul, li, h1, span, MainDOMSource } from "@cycle/dom";
-import { request as graphqlRequest, gql } from "graphql-request";
+import { request as graphqlRequest } from "graphql-request";
+
+import {
+  TodoFragmentFragment,
+  GetTodosDocument,
+  UpdateTodoDocument,
+  GetTodosQuery,
+  UpdateTodoMutation,
+} from "../generated/types";
 
 // --- Helper Functions ---
 function isDefined<T>(val: T | undefined): val is T {
@@ -10,54 +18,41 @@ function isDefined<T>(val: T | undefined): val is T {
 }
 
 // --- GraphQLと型の定義 ---
-interface Todo {
-  id: string;
-  text: string;
-  completed: boolean;
-}
-
-const getTodosQuery = gql`
-  query {
-    todos {
-      id
-      text
-      completed
-    }
-  }
-`;
-
-const updateTodoMutation = gql`
-  mutation UpdateTodo($id: ID!, $completed: Boolean!) {
-    updateTodo(id: $id, completed: $completed) {
-      id
-      text
-      completed
-    }
-  }
-`;
+type Todo = TodoFragmentFragment;
 
 // --- 型定義の強化 (Discriminated Union) ---
-interface GetTodosResponse {
+type GetTodosResponse = {
   category: "getTodos";
-  todos: Todo[];
-}
-
-interface UpdateTodoResponse {
+  __typename?: "Query";
+  todos: Array<{
+    __typename?: "Todo";
+    id: string;
+    text: string;
+    completed: boolean;
+  }>;
+};
+type UpdateTodoResponse = {
   category: "updateTodo";
-  updateTodo: Todo;
-}
+  __typename?: "Mutation";
+  updateTodo?: {
+    __typename?: "Todo";
+    id: string;
+    text: string;
+    completed: boolean;
+  } | null;
+};
 
 type ApiResponse = GetTodosResponse | UpdateTodoResponse;
 
 // Request Payload Types
 interface GetTodosRequestPayload {
-  query: string;
+  query: typeof GetTodosDocument;
   variables: {};
   category: "getTodos";
 }
 
 interface UpdateTodoRequestPayload {
-  query: string;
+  query: typeof UpdateTodoDocument;
   variables: { id: string; completed: boolean };
   category: "updateTodo";
 }
@@ -107,7 +102,7 @@ export function App(sources: AppSources): AppSinks {
 
   // --- MODEL (状態管理とロジック) ---
   const getTodosRequest$: Stream<GetTodosRequestPayload> = xs.of({
-    query: getTodosQuery,
+    query: GetTodosDocument,
     variables: {},
     category: "getTodos",
   });
@@ -117,7 +112,7 @@ export function App(sources: AppSources): AppSinks {
       proxyTodos$.take(1).map((todos): UpdateTodoRequestPayload => {
         const todo = todos.find((t) => t.id === id);
         return {
-          query: updateTodoMutation,
+          query: UpdateTodoDocument,
           variables: { id, completed: !todo?.completed },
           category: "updateTodo",
         };
@@ -125,24 +120,27 @@ export function App(sources: AppSources): AppSinks {
     )
     .flatten();
 
-  const request$: Stream<RequestPayload> = xs.merge(getTodosRequest$, updateTodoRequest$);
+  const request$: Stream<RequestPayload> = xs.merge(
+    getTodosRequest$,
+    updateTodoRequest$
+  );
 
   // 2. APIリクエストを送り、レスポンスのストリームを作成する
   const response$: Stream<ApiResponse> = request$
     .map((req) => {
       if (req.category === "getTodos") {
         return xs.fromPromise(
-          graphqlRequest<{ todos: Todo[] }>(
+          graphqlRequest<GetTodosQuery>(
             "http://localhost:4000/graphql",
-            req.query,
+            GetTodosDocument,
             req.variables
           ).then((res): ApiResponse => ({ ...res, category: "getTodos" }))
         );
       } else {
         return xs.fromPromise(
-          graphqlRequest<{ updateTodo: Todo }>(
+          graphqlRequest<UpdateTodoMutation>(
             "http://localhost:4000/graphql",
-            req.query,
+            UpdateTodoDocument,
             req.variables
           ).then((res): ApiResponse => ({ ...res, category: "updateTodo" }))
         );
@@ -158,7 +156,7 @@ export function App(sources: AppSources): AppSinks {
       };
     }
     return function updateTodoReducer(prev?: Todo[]): Todo[] {
-      const updatedTodo = responseObject.updateTodo;
+      const updatedTodo = responseObject.updateTodo as TodoFragmentFragment;
       return (
         prev?.map((t) => (t.id === updatedTodo.id ? updatedTodo : t)) ?? []
       );

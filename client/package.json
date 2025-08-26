@@ -7,17 +7,27 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "test": "vitest"
+    "generate": "graphql-codegen --config codegen.ts",
+    "test": "vitest",
+    "generate-graphql-env": "node scripts/generate-graphql-env.js"
   },
   "dependencies": {
     "@cycle/dom": "^23.1.0",
     "@cycle/react": "^1.0.0-rc.6",
     "@cycle/run": "^5.7.0",
+    "@graphql-typed-document-node/core": "^3.2.0",
+    "@graphql-yoga/node": "^3.9.1",
+    "gql.tada": "^1.8.13",
     "graphql": "^16.8.1",
     "graphql-request": "^7.0.1",
     "xstream": "^11.14.0"
   },
   "devDependencies": {
+    "@graphql-codegen/cli": "^5.0.7",
+    "@graphql-codegen/introspection": "^4.0.3",
+    "@graphql-codegen/typescript": "^4.1.6",
+    "@graphql-codegen/typescript-graphql-request": "^6.3.0",
+    "@graphql-codegen/typescript-operations": "^4.6.1",
     "@testing-library/jest-dom": "^6.8.0",
     "@testing-library/react": "^16.3.0",
     "jsdom": "^26.1.0",
