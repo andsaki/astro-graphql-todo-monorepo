@@ -42,13 +42,13 @@ const resolvers = {
   },
   Mutation: {
     addTodo: async (_: unknown, { text }: AddTodoArgs) => {
-      const result = await db.insertInto('todos').values({ text, completed: 0 }).execute(); // Convert false to 0
-      const newTodoId = result.insertId; // Get the last inserted ID
+      const result = await db.insertInto('todos').values({ text, completed: 0 }).execute();
+      const newTodoId = Number(result[0].insertId); // Changed here
       const newTodo = await db.selectFrom('todos').where('id', '=', newTodoId).selectAll().executeTakeFirstOrThrow();
       return { ...newTodo, id: String(newTodo.id) };
     },
     updateTodo: async (_: unknown, { id, completed }: UpdateTodoArgs) => {
-      await db.updateTable('todos').set({ completed: completed ? 1 : 0 }).where('id', '=', parseInt(id)).execute(); // Convert boolean to 0 or 1
+      await db.updateTable('todos').set({ completed: completed ? 1 : 0 }).where('id', '=', parseInt(id)).execute();
       const updatedTodo = await db.selectFrom('todos').where('id', '=', parseInt(id)).selectAll().executeTakeFirst();
       return updatedTodo ? { ...updatedTodo, id: String(updatedTodo.id) } : null;
     },
