@@ -9,7 +9,7 @@ const config: CodegenConfig = {
     'src/generated/types.ts': {
       plugins: ['typescript', 'typescript-operations', 'typescript-graphql-request'],
       config: {
-        verbatimModuleSyntax: true,
+        useTypeImports: true,
       },
     },
     'src/generated/schema.json': {
