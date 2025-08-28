@@ -3,6 +3,7 @@ import { gql } from "graphql-request";
 import { client } from "../lib/graphql";
 import type {
   GetTodosQuery,
+  GetTodosQueryVariables,
   UpdateTodoMutation,
   UpdateTodoMutationVariables,
   DeleteTodoMutation,
@@ -11,8 +12,8 @@ import type {
 import AddTodo from "./AddTodo";
 
 export const GET_TODOS = gql`
-  query GetTodos {
-    todos {
+  query GetTodos($term: String) {
+    todos(term: $term) {
       id
       text
       completed
@@ -37,10 +38,14 @@ const DELETE_TODO = gql`
 
 const TodoList = () => {
   const [todos, setTodos] = useState<GetTodosQuery["todos"]>([]);
+  const [term, setTerm] = useState("");
 
-  const fetchTodos = useCallback(async () => {
+  const fetchTodos = useCallback(async (searchTerm: string) => {
     try {
-      const data = await client.request<GetTodosQuery>(GET_TODOS);
+      const data = await client.request<GetTodosQuery, GetTodosQueryVariables>(
+        GET_TODOS,
+        { term: searchTerm }
+      );
       setTodos(data.todos);
     } catch (error) {
       console.error("Error fetching todos:", error);
@@ -48,8 +53,11 @@ const TodoList = () => {
   }, []);
 
   useEffect(() => {
-    fetchTodos();
-  }, [fetchTodos]);
+    const debounce = setTimeout(() => {
+      fetchTodos(term);
+    }, 300);
+    return () => clearTimeout(debounce);
+  }, [fetchTodos, term]);
 
   const handleUpdateTodo = async (id: string, completed: boolean) => {
     try {
@@ -57,7 +65,7 @@ const TodoList = () => {
         UPDATE_TODO,
         { id, completed }
       );
-      fetchTodos();
+      fetchTodos(term);
     } catch (error) {
       console.error("Error updating todo:", error);
     }
@@ -69,7 +77,7 @@ const TodoList = () => {
         DELETE_TODO,
         { id }
       );
-      fetchTodos();
+      fetchTodos(term);
     } catch (error) {
       console.error("Error deleting todo:", error);
     }
@@ -78,7 +86,13 @@ const TodoList = () => {
   return (
     <div>
       <h1>Todo List</h1>
-      <AddTodo onAdd={fetchTodos} />
+      <AddTodo onAdd={() => fetchTodos(term)} />
+      <input
+        type="text"
+        placeholder="Search todos"
+        value={term}
+        onChange={(e) => setTerm(e.target.value)}
+      />
       <ul>
         {todos.map((todo) => (
           <li key={todo.id}>
