@@ -61,17 +61,16 @@ func (r *mutationResolver) DeleteTodo(ctx context.Context, id string) (*bool, er
 		return nil, fmt.Errorf("invalid ID format: %w", err)
 	}
 
-	res, err := r.Queries.DeleteTodo(ctx, intID)
+	err = r.Queries.DeleteTodo(ctx, intID)
 	if err != nil {
+		if err == sql.ErrNoRows {
+			success := false
+			return &success, nil // No row found to delete, so return false
+		}
 		return nil, fmt.Errorf("failed to delete todo: %w", err)
 	}
 
-	rowsAffected, err := res.RowsAffected()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get rows affected: %w", err)
-	}
-
-	success := rowsAffected > 0
+	success := true // Deletion was successful
 	return &success, nil
 }
 
