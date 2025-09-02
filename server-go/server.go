@@ -13,6 +13,7 @@ import (
 	"github.com/99designs/gqlgen/graphql/handler/transport"
 	"github.com/99designs/gqlgen/graphql/playground"
 	_ "github.com/mattn/go-sqlite3" // Import sqlite3 driver
+	"astro-graphql-todo/server-go/db" // Add this line
 	"github.com/rs/cors"            // Add this line
 	"github.com/vektah/gqlparser/v2/ast"
 )
@@ -27,14 +28,14 @@ func main() {
 	}
 
 	// データベースに接続
-	db, err := sql.Open("sqlite3", dbFile)
+	sqlDB, err := sql.Open("sqlite3", dbFile)
 	if err != nil {
 		log.Fatalf("failed to open database: %v", err)
 	}
-	defer db.Close()
+	defer sqlDB.Close()
 
 	// todosテーブルが存在しない場合に作成（簡易的なマイグレーション）
-	_, err = db.Exec(`CREATE TABLE IF NOT EXISTS todos (
+	_, err = sqlDB.Exec(`CREATE TABLE IF NOT EXISTS todos (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
 		text TEXT NOT NULL,
 		completed BOOLEAN NOT NULL CHECK (completed IN (0, 1))
@@ -43,7 +44,7 @@ func main() {
 		log.Fatalf("failed to create table: %v", err)
 	}
 
-	queries := db.New(db)
+	queries := db.New(sqlDB)
 	// リゾルバにデータベース接続を渡す
 	srv := handler.New(graph.NewExecutableSchema(graph.Config{Resolvers: &graph.Resolver{Queries: queries}}))
 
