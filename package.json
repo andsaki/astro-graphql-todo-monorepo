@@ -3,13 +3,21 @@
   "private": true,
   "version": "1.0.0",
   "scripts": {
-    "dev": "pnpm run dev --filter server & pnpm run dev --filter client"
+    "dev": "concurrently \"pnpm:dev:server\" \"pnpm:dev:client\"",
+    "dev:client": "pnpm --filter client dev",
+    "dev:server": "cd server-go && go run ./server.go"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
   "workspaces": [
     "client",
-    "server"
-  ]
+    "server-go"
+  ],
+  "volta": {
+    "node": "20.19.4"
+  }
 }
