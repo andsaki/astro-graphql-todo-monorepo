@@ -10,75 +10,75 @@
 
 ## 技術スタック
 
-- **モノレポ:** [npm Workspaces](https://docs.npmjs.com/cli/v7/using-npm/workspaces)
+- **モノレポ:** [pnpm Workspaces](https://pnpm.io/workspaces)
+- **バージョン管理:** [Volta](https://volta.sh/) (Node.js と pnpm のバージョンを自動で管理します)
 - **フロントエンド:**
   - [Astro](https://astro.build/)
   - [React](https://react.dev/)
   - [GraphQL Request](https://github.com/prisma-labs/graphql-request)
   - [GraphQL Code Generator](https://www.graphql-code-generator.com/)
 - **バックエンド:**
-  - [GraphQL Yoga](https://the-guild.dev/graphql/yoga-server)
-  - [Node.js](https://nodejs.org/)
-  - [TypeScript](https://www.typescriptlang.org/)
-  - [Kysely](https://kysely.dev/) (SQL クエリビルダ)
-  - [better-sqlite3](https://github.com/WiseLibs/better-sqlite3) (SQLite ドライバ)
+  - [Go](https://go.dev/)
+  - [gqlgen](https://gqlgen.com/) (GraphQL サーバーライブラリ)
+  - [sqlc](https://sqlc.dev/) (Go 用の型安全な SQL)
+  - [go-sqlite3](https://github.com/mattn/go-sqlite3) (SQLite ドライバ)
 
 ## プロジェクト構成
 
 このプロジェクトは、2 つの主要なパッケージを持つモノレポです。
 
 - `client/`: Astro と React で構築されたフロントエンド
-- `server/`: GraphQL API バックエンド
+- `server-go/`: Go と gqlgen で構築された GraphQL API バックエンド
 
 ## セットアップ方法
 
 ### 前提条件
 
-- [Node.js](https://nodejs.org/) (v20 以降を推奨)
-- [npm](https://www.npmjs.com/)
+- [Volta](https://volta.sh/) (Node.js と pnpm のバージョンを自動で管理します)
+- [Go](https://go.dev/) (v1.21 以降を推奨)
+- [sqlc](https://sqlc.dev/) (Go 用の型安全な SQL を生成するために必要です)
+  - `go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest` でインストールできます。
 
 ### インストール
 
 1.  **クライアントとサーバー両方の依存関係をインストールします:**
 
     ```bash
-    npm install
+    pnpm install
     ```
 
-2.  **データベースをセットアップします:**
+2.  **データベースは自動でセットアップされます:**
 
-    このコマンドは SQLite データベースを作成し、必要なマイグレーションを実行します。
-
-    ```bash
-    npm run migrate --workspace=server
-    ```
+    開発サーバーを初めて起動すると、プロジェクトルートに `todo.db` ファイルが自動的に作成されます。
 
 ### 開発サーバーの実行
 
 このコマンドは、フロントエンドとバックエンドの開発サーバーを同時に起動します。
 
 ```bash
-npm run dev
+pnpm run dev
 ```
 
 - フロントエンドは `http://localhost:4321` で利用可能になります。
-- GraphQL API エンドポイントは `http://localhost:4000/graphql` で利用可能になります。
+- GraphQL API エンドポイントは `http://localhost:4002/graphql` で利用可能になります。
 
 ## 利用可能なスクリプト
 
 ### ルート
 
-- `npm run dev`: クライアントとサーバー両方の開発サーバーを起動します。
-- `npm install`: 両方のワークスペースの依存関係をインストールします。
+- `pnpm install`: すべてのワークスペースの依存関係をインストールします。
+- `pnpm run dev`: クライアントとサーバー両方の開発サーバーを起動します。
+- `pnpm run db:generate`: `sqlc` を使用してデータベースクエリのGoコードを生成します。
+- `pnpm run gql:generate`: `gqlgen` を使用してGraphQLのGoコードを生成します。
 
 ### クライアント (`/client`)
 
-- `npm run dev`: Astro 開発サーバーを起動します。
-- `npm run build`: 本番用にクライアントアプリケーションをビルドします。
-- `npm run preview`: 本番ビルドをローカルでプレビューします。
-- `npm run generate`: スキーマに基づいて GraphQL の型を生成します。
+- `pnpm run dev`: Astro 開発サーバーを起動します。
+- `pnpm run build`: 本番用にクライアントアプリケーションをビルドします。
+- `pnpm run preview`: 本番ビルドをローカルでプレビューします。
+- `pnpm run generate`: スキーマに基づいて GraphQL の型を生成します。
 
-### サーバー (`/server`)
+### サーバー (`/server-go`)
 
-- `npm run dev`: ホットリロード機能を備えた GraphQL Yoga サーバーを起動します。
-- `npm run migrate`: データベースのマイグレーションを実行します。
+- `go run server.go`: Go GraphQL サーバーを起動します。
+  (通常は `pnpm run dev` で起動されるため、直接実行する必要はありません。)
