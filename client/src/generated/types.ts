@@ -45,6 +45,11 @@ export type Query = {
   todos: Array<Todo>;
 };
 
+
+export type QueryTodosArgs = {
+  term?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type Todo = {
   __typename?: 'Todo';
   completed: Scalars['Boolean']['output'];
@@ -59,7 +64,9 @@ export type AddTodoMutationVariables = Exact<{
 
 export type AddTodoMutation = { __typename?: 'Mutation', addTodo: { __typename?: 'Todo', id: string, text: string, completed: boolean } };
 
-export type GetTodosQueryVariables = Exact<{ [key: string]: never; }>;
+export type GetTodosQueryVariables = Exact<{
+  term?: InputMaybe<Scalars['String']['input']>;
+}>;
 
 
 export type GetTodosQuery = { __typename?: 'Query', todos: Array<{ __typename?: 'Todo', id: string, text: string, completed: boolean }> };
@@ -90,8 +97,8 @@ export const AddTodoDocument = gql`
 }
     `;
 export const GetTodosDocument = gql`
-    query GetTodos {
-  todos {
+    query GetTodos($term: String) {
+  todos(term: $term) {
     id
     text
     completed
