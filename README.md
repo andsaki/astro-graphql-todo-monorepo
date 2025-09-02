@@ -1,4 +1,4 @@
-# cycle-graphql-todo
+# Astro GraphQL Todo Monorepo
 
 これは、モダンな Web 開発スタックで構築された、pnpm ワークスペースによるモノレポアーキテクチャを特徴とするシンプルな Todo アプリケーションです。
 

@@ -1,4 +1,4 @@
-module cycle-graphql-todo/server-go
+module astro-graphql-todo/server-go
 
 go 1.23.0
 

@@ -9,7 +9,7 @@
 ├── public/
 ├── src/
 │   ├── components/
-│   ├── generated/  (GraphQL Code Generatorによって自動生成)
+│   ├── generated/  (GraphQL Code Generatorにより自動生成)
 │   ├── layouts/    (Astroのレイアウト)
 │   └── pages/      (Astroのページ)
 └── package.json

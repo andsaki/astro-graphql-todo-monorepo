@@ -1,7 +1,7 @@
 package main
 
 import (
-	"cycle-graphql-todo/server-go/graph"
+	"astro-graphql-todo/server-go/graph"
 	"database/sql"
 	"log"
 	"net/http"
