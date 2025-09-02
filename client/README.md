@@ -2,16 +2,16 @@
 
 ## 🚀 Project Structure
 
-Inside of your Astro project, you'll see the following folders and files:
+このクライアントプロジェクトには、以下のフォルダとファイルが含まれています。
 
 ```text
 .
 ├── public/
 ├── src/
 │   ├── components/
-│   ├── generated/
-│   ├── layouts/
-│   └── pages/
+│   ├── generated/  (GraphQL Code Generatorによって自動生成)
+│   ├── layouts/    (Astroのレイアウト)
+│   └── pages/      (Astroのページ)
 └── package.json
 ```
 

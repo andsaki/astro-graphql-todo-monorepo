@@ -18,7 +18,7 @@ import (
 )
 
 const defaultPort = "4002"
-const dbFile = "../todo.db" // Use the same db file as the TS server
+const dbFile = "../todo.db" // TSサーバーと同じDBファイルを使用
 
 func main() {
 	port := os.Getenv("PORT")
@@ -26,14 +26,14 @@ func main() {
 		port = defaultPort
 	}
 
-	// Connect to the database
+	// データベースに接続
 	db, err := sql.Open("sqlite3", dbFile)
 	if err != nil {
 		log.Fatalf("failed to open database: %v", err)
 	}
 	defer db.Close()
 
-	// Create the todos table if it doesn't exist (migration)
+	// todosテーブルが存在しない場合に作成（簡易的なマイグレーション）
 	_, err = db.Exec(`CREATE TABLE IF NOT EXISTS todos (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
 		text TEXT NOT NULL,
@@ -43,7 +43,7 @@ func main() {
 		log.Fatalf("failed to create table: %v", err)
 	}
 
-	// Pass the db connection to the resolver
+	// リゾルバにデータベース接続を渡す
 	srv := handler.New(graph.NewExecutableSchema(graph.Config{Resolvers: &graph.Resolver{DB: db}}))
 
 	srv.AddTransport(transport.Options{})
@@ -57,12 +57,13 @@ func main() {
 		Cache: lru.New[string](100),
 	})
 
-	// Add CORS middleware
+	// CORSミドルウェアを追加
 	c := cors.New(cors.Options{
 		AllowedOrigins:   []string{"http://localhost:4321", "http://localhost:4002"}, // Astroクライアントと自身のPlaygroundを許可
 		AllowCredentials: true,
 	})
 
+	// HTTPハンドラを設定
 	http.Handle("/", playground.Handler("GraphQL playground", "/graphql"))
 	http.Handle("/graphql", c.Handler(srv))
 
