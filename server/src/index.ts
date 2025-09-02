@@ -37,7 +37,7 @@ interface DeleteTodoArgs {
 const resolvers = {
   Query: {
     todos: async (_: unknown, { term }: { term?: string }) => {
-            // 'todos'テーブルからすべてのカラムを選択するクエリを初期化します。
+      // 'todos'テーブルからすべてのカラムを選択するクエリを初期化します。
       let query = db.selectFrom("todos").selectAll();
       // 検索語(term)が提供されている場合、textカラムで部分一致検索の条件を追加します。
       if (term) {
