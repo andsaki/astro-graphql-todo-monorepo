@@ -5,7 +5,7 @@ package graph
 import (
 	"bytes"
 	"context"
-	"cycle-graphql-todo/server-go/graph/model"
+	"astro-graphql-todo/server-go/graph/model"
 	"embed"
 	"errors"
 	"fmt"

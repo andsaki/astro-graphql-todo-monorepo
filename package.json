@@ -5,7 +5,9 @@
   "scripts": {
     "dev": "concurrently \"pnpm:dev:server\" \"pnpm:dev:client\"",
     "dev:client": "pnpm --filter client dev",
-    "dev:server": "cd server-go && go run ./server.go"
+    "dev:server": "cd server-go && go run ./server.go",
+    "db:generate": "cd server-go && sqlc generate",
+    "gql:generate": "cd server-go && go generate ./..."
   },
   "keywords": [],
   "author": "",

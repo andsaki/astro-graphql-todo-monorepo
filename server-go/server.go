@@ -43,8 +43,9 @@ func main() {
 		log.Fatalf("failed to create table: %v", err)
 	}
 
+	queries := db.New(db)
 	// リゾルバにデータベース接続を渡す
-	srv := handler.New(graph.NewExecutableSchema(graph.Config{Resolvers: &graph.Resolver{DB: db}}))
+	srv := handler.New(graph.NewExecutableSchema(graph.Config{Resolvers: &graph.Resolver{Queries: queries}}))
 
 	srv.AddTransport(transport.Options{})
 	srv.AddTransport(transport.GET{})
