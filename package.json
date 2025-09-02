@@ -6,7 +6,7 @@
     "dev": "concurrently \"pnpm:dev:server\" \"pnpm:dev:client\"",
     "dev:client": "pnpm --filter client dev",
     "dev:server": "cd server-go && go run ./server.go",
-    "db:generate": "cd server-go && sqlc generate",
+    "db:generate": "cd server-go && /Users/YudukiHotaru/go/bin/sqlc generate",
     "gql:generate": "cd server-go && go generate ./..."
   },
   "keywords": [],
