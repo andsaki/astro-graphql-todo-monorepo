@@ -1,11 +1,13 @@
 package main
 
 import (
-	"astro-graphql-todo/server-go/graph"
+	"astro-graphql-todo/server/graph"
 	"database/sql"
 	"log"
 	"net/http"
 	"os"
+
+	"astro-graphql-todo/server/db"
 
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/handler/extension"
@@ -13,8 +15,6 @@ import (
 	"github.com/99designs/gqlgen/graphql/handler/transport"
 	"github.com/99designs/gqlgen/graphql/playground"
 	_ "github.com/mattn/go-sqlite3" // Import sqlite3 driver
-	"astro-graphql-todo/server/graph"
-	"astro-graphql-todo/server/db"
 	"github.com/rs/cors"            // Add this line
 	"github.com/vektah/gqlparser/v2/ast"
 )
@@ -35,7 +35,7 @@ func main() {
 	}
 	defer sqlDB.Close()
 
-	// todosテーブルが存在しない場合に作成（簡易的なマイグレーション）
+	// to dosテーブルが存在しない場合に作成（簡易的なマイグレーション）
 	_, err = sqlDB.Exec(`CREATE TABLE IF NOT EXISTS todos (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
 		text TEXT NOT NULL,
