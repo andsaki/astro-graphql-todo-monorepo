@@ -74,7 +74,7 @@ func (r *mutationResolver) DeleteTodo(ctx context.Context, id string) (*bool, er
 	return &success, nil
 }
 
-// Todos は todos フィールドのリゾルバです。
+// To dos は todos フィールドのリゾルバです。
 func (r *queryResolver) Todos(ctx context.Context, term *string) ([]*model.Todo, error) {
 	var dbTodos []db.Todo
 	var err error
