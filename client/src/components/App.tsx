@@ -9,7 +9,7 @@ const App: React.FC = () => {
     <ApolloProvider client={client}>
       <h1>Todo App</h1>
       <AddTodo />
-      <TodoList />
+      <TodoList showSort={true} />
     </ApolloProvider>
   );
 };

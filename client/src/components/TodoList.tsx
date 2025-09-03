@@ -36,7 +36,11 @@ const DELETE_TODO = gql`
   }
 `;
 
-const TodoList = () => {
+interface TodoListProps {
+  showSort?: boolean;
+}
+
+const TodoList = ({ showSort = false }: TodoListProps) => {
   const [term, setTerm] = useState("");
   const [sort, setSort] = useState<SortOrder>(SortOrder.Desc);
 
@@ -102,14 +106,20 @@ const TodoList = () => {
 
   return (
     <div>
-      <input
-        type="text"
-        placeholder="Search todos"
-        value={term}
-        onChange={(e) => setTerm(e.target.value)}
-      />
-      <button onClick={() => setSort(SortOrder.Asc)}>Sort Asc</button>
-      <button onClick={() => setSort(SortOrder.Desc)}>Sort Desc</button>
+      <div className="controls-container">
+        <input
+          type="text"
+          placeholder="Search todos"
+          value={term}
+          onChange={(e) => setTerm(e.target.value)}
+        />
+        {showSort && (
+          <select value={sort} onChange={(e) => setSort(e.target.value as SortOrder)}>
+            <option value={SortOrder.Asc}>Asc</option>
+            <option value={SortOrder.Desc}>Desc</option>
+          </select>
+        )}
+      </div>
       <ul>
         {todos.map((todo) => (
           <li key={todo.id}>
