@@ -1,4 +1,4 @@
-module astro-graphql-todo/server-go
+module astro-graphql-todo/server
 
 go 1.23.0
 

@@ -28,7 +28,7 @@
 このプロジェクトは、2 つの主要なパッケージを持つモノレポです。
 
 - `client/`: Astro と React で構築されたフロントエンド
-- `server-go/`: Go と gqlgen で構築された GraphQL API バックエンド
+- `server/`: Go と gqlgen で構築された GraphQL API バックエンド
 
 ## セットアップ方法
 

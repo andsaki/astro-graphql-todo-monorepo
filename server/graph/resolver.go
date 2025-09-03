@@ -1,6 +1,6 @@
 package graph
 
-import "astro-graphql-todo/server-go/db"
+import "astro-graphql-todo/server/db"
 
 // This file will not be regenerated automatically.
 //

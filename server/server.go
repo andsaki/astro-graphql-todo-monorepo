@@ -13,7 +13,8 @@ import (
 	"github.com/99designs/gqlgen/graphql/handler/transport"
 	"github.com/99designs/gqlgen/graphql/playground"
 	_ "github.com/mattn/go-sqlite3" // Import sqlite3 driver
-	"astro-graphql-todo/server-go/db" // Add this line
+	"astro-graphql-todo/server/graph"
+	"astro-graphql-todo/server/db"
 	"github.com/rs/cors"            // Add this line
 	"github.com/vektah/gqlparser/v2/ast"
 )
