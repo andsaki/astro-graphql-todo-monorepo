@@ -1,7 +1,11 @@
-import React, { useState } from 'react';
-import { gql } from 'graphql-request';
-import { client } from '../lib/graphql';
-import type { AddTodoMutation, AddTodoMutationVariables } from '../generated/types';
+import React, { useState } from "react";
+import { useMutation } from "@apollo/client/react";
+import { gql } from "../lib/graphql";
+import type {
+  AddTodoMutation,
+  AddTodoMutationVariables,
+} from "../generated/types";
+import { GET_TODOS } from './TodoList'; // Import GET_TODOS to refetch after adding
 
 const ADD_TODO = gql`
   mutation AddTodo($text: String!) {
@@ -13,19 +17,21 @@ const ADD_TODO = gql`
   }
 `;
 
-const AddTodo = ({ onAdd }: { onAdd: () => void }) => {
-  const [text, setText] = useState('');
+const AddTodo = () => {
+  const [text, setText] = useState("");
+  const [addTodo] = useMutation<AddTodoMutation, AddTodoMutationVariables>(ADD_TODO, {
+    refetchQueries: [{ query: GET_TODOS }], // Refetch todos after adding
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!text.trim()) return;
 
     try {
-      await client.request<AddTodoMutation, AddTodoMutationVariables>(ADD_TODO, { text });
-      setText('');
-      onAdd(); // Callback to refetch the list
+      await addTodo({ variables: { text } });
+      setText("");
     } catch (error) {
-      console.error('Error adding todo:', error);
+      console.error("Error adding todo:", error);
     }
   };
 

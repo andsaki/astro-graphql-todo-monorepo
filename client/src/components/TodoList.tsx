@@ -1,6 +1,6 @@
-import { useEffect, useState, useCallback } from "react";
-import { gql } from "graphql-request";
-import { client } from "../lib/graphql";
+import { useEffect, useState } from "react";
+import { useQuery, useMutation } from "@apollo/client/react";
+import { gql } from "../lib/graphql";
 import type {
   GetTodosQuery,
   GetTodosQueryVariables,
@@ -9,7 +9,6 @@ import type {
   DeleteTodoMutation,
   DeleteTodoMutationVariables,
 } from "../generated/types";
-import AddTodo from "./AddTodo";
 
 export const GET_TODOS = gql`
   query GetTodos($term: String) {
@@ -37,56 +36,45 @@ const DELETE_TODO = gql`
 `;
 
 const TodoList = () => {
-  const [todos, setTodos] = useState<GetTodosQuery["todos"]>([]);
   const [term, setTerm] = useState("");
-
-  const fetchTodos = useCallback(async (searchTerm: string) => {
-    try {
-      const data = await client.request<GetTodosQuery, GetTodosQueryVariables>(
-        GET_TODOS,
-        { term: searchTerm }
-      );
-      setTodos(data.todos);
-    } catch (error) {
-      console.error("Error fetching todos:", error);
-    }
-  }, []);
+  const { data, loading, error, refetch } = useQuery<GetTodosQuery, GetTodosQueryVariables>(GET_TODOS, {
+    variables: { term },
+  });
+  const [updateTodo] = useMutation<UpdateTodoMutation, UpdateTodoMutationVariables>(UPDATE_TODO);
+  const [deleteTodo] = useMutation<DeleteTodoMutation, DeleteTodoMutationVariables>(DELETE_TODO);
 
   useEffect(() => {
     const debounce = setTimeout(() => {
-      fetchTodos(term);
+      refetch({ term });
     }, 300);
     return () => clearTimeout(debounce);
-  }, [fetchTodos, term]);
+  }, [term, refetch]);
 
   const handleUpdateTodo = async (id: string, completed: boolean) => {
     try {
-      await client.request<UpdateTodoMutation, UpdateTodoMutationVariables>(
-        UPDATE_TODO,
-        { id, completed }
-      );
-      fetchTodos(term);
-    } catch (error) {
-      console.error("Error updating todo:", error);
+      await updateTodo({ variables: { id, completed } });
+      refetch();
+    } catch (err) {
+      console.error("Error updating todo:", err);
     }
   };
 
   const handleDeleteTodo = async (id: string) => {
     try {
-      await client.request<DeleteTodoMutation, DeleteTodoMutationVariables>(
-        DELETE_TODO,
-        { id }
-      );
-      fetchTodos(term);
-    } catch (error) {
-      console.error("Error deleting todo:", error);
+      await deleteTodo({ variables: { id } });
+      refetch();
+    } catch (err) {
+      console.error("Error deleting todo:", err);
     }
   };
 
+  if (loading) return <p>Loading...</p>;
+  if (error) return <p>Error: {error.message}</p>;
+
+  const todos = data?.todos || [];
+
   return (
     <div>
-      <h1>Todo List</h1>
-      <AddTodo onAdd={() => fetchTodos(term)} />
       <input
         type="text"
         placeholder="Search todos"
