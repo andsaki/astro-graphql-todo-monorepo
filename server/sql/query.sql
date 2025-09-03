@@ -10,5 +10,11 @@ DELETE FROM todos WHERE id = ?;
 -- name: ListTodos :many
 SELECT * FROM todos ORDER BY id DESC;
 
+-- name: ListTodosAsc :many
+SELECT * FROM todos ORDER BY id ASC;
+
 -- name: ListTodosByTerm :many
 SELECT * FROM todos WHERE text LIKE ? ORDER BY id DESC;
+
+-- name: ListTodosByTermAsc :many
+SELECT * FROM todos WHERE text LIKE ? ORDER BY id ASC;

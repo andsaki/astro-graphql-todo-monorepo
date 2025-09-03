@@ -61,12 +61,66 @@ func (q *Queries) ListTodos(ctx context.Context) ([]Todo, error) {
 	return items, nil
 }
 
+const listTodosAsc = `-- name: ListTodosAsc :many
+SELECT id, text, completed FROM todos ORDER BY id ASC
+`
+
+func (q *Queries) ListTodosAsc(ctx context.Context) ([]Todo, error) {
+	rows, err := q.db.QueryContext(ctx, listTodosAsc)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Todo
+	for rows.Next() {
+		var i Todo
+		if err := rows.Scan(&i.ID, &i.Text, &i.Completed); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listTodosByTerm = `-- name: ListTodosByTerm :many
 SELECT id, text, completed FROM todos WHERE text LIKE ? ORDER BY id DESC
 `
 
 func (q *Queries) ListTodosByTerm(ctx context.Context, text string) ([]Todo, error) {
 	rows, err := q.db.QueryContext(ctx, listTodosByTerm, text)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Todo
+	for rows.Next() {
+		var i Todo
+		if err := rows.Scan(&i.ID, &i.Text, &i.Completed); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listTodosByTermAsc = `-- name: ListTodosByTermAsc :many
+SELECT id, text, completed FROM todos WHERE text LIKE ? ORDER BY id ASC
+`
+
+func (q *Queries) ListTodosByTermAsc(ctx context.Context, text string) ([]Todo, error) {
+	rows, err := q.db.QueryContext(ctx, listTodosByTermAsc, text)
 	if err != nil {
 		return nil, err
 	}

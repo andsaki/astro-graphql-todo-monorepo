@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useQuery, useMutation } from "@apollo/client/react";
 import { gql } from "../lib/graphql";
+import { SortOrder } from "../generated/types";
 import type {
   GetTodosQuery,
   GetTodosQueryVariables,
@@ -11,8 +12,8 @@ import type {
 } from "../generated/types";
 
 export const GET_TODOS = gql`
-  query GetTodos($term: String) {
-    todos(term: $term) {
+  query GetTodos($term: String, $sort: SortOrder) {
+    todos(term: $term, sort: $sort) {
       id
       text
       completed
@@ -37,18 +38,44 @@ const DELETE_TODO = gql`
 
 const TodoList = () => {
   const [term, setTerm] = useState("");
+  const [sort, setSort] = useState<SortOrder>(SortOrder.Desc);
+
   const { data, loading, error, refetch } = useQuery<GetTodosQuery, GetTodosQueryVariables>(GET_TODOS, {
-    variables: { term },
+    variables: { term, sort },
   });
   const [updateTodo] = useMutation<UpdateTodoMutation, UpdateTodoMutationVariables>(UPDATE_TODO);
   const [deleteTodo] = useMutation<DeleteTodoMutation, DeleteTodoMutationVariables>(DELETE_TODO);
 
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const termFromUrl = params.get("term");
+    const sortFromUrl = params.get("sort");
+    if (termFromUrl) {
+      setTerm(termFromUrl);
+    }
+    if (sortFromUrl === SortOrder.Asc || sortFromUrl === SortOrder.Desc) {
+      setSort(sortFromUrl);
+    }
+  }, []);
+
+  useEffect(() => {
     const debounce = setTimeout(() => {
-      refetch({ term }); // 検索条件に基づいてTodoリストを再フェッチします
+      refetch({ term, sort });
+      const params = new URLSearchParams(window.location.search);
+      if (term) {
+        params.set("term", term);
+      } else {
+        params.delete("term");
+      }
+      if (sort) {
+        params.set("sort", sort);
+      } else {
+        params.delete("sort");
+      }
+      window.history.replaceState({}, "", `${window.location.pathname}?${params}`);
     }, 300);
     return () => clearTimeout(debounce);
-  }, [term, refetch]);
+  }, [term, sort, refetch]);
 
   const handleUpdateTodo = async (id: string, completed: boolean) => {
     try {
@@ -81,6 +108,8 @@ const TodoList = () => {
         value={term}
         onChange={(e) => setTerm(e.target.value)}
       />
+      <button onClick={() => setSort(SortOrder.Asc)}>Sort Asc</button>
+      <button onClick={() => setSort(SortOrder.Desc)}>Sort Desc</button>
       <ul>
         {todos.map((todo) => (
           <li key={todo.id}>

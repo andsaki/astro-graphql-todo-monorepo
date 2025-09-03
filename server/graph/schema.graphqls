@@ -1,5 +1,10 @@
 type Query {
-  todos(term: String): [Todo!]!
+  todos(term: String, sort: SortOrder): [Todo!]!
+}
+
+enum SortOrder {
+  asc
+  desc
 }
 
 type Mutation {

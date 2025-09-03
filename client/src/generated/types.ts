@@ -47,8 +47,14 @@ export type Query = {
 
 
 export type QueryTodosArgs = {
+  sort?: InputMaybe<SortOrder>;
   term?: InputMaybe<Scalars['String']['input']>;
 };
+
+export enum SortOrder {
+  Asc = 'asc',
+  Desc = 'desc'
+}
 
 export type Todo = {
   __typename?: 'Todo';
@@ -66,6 +72,7 @@ export type AddTodoMutation = { __typename?: 'Mutation', addTodo: { __typename?:
 
 export type GetTodosQueryVariables = Exact<{
   term?: InputMaybe<Scalars['String']['input']>;
+  sort?: InputMaybe<SortOrder>;
 }>;
 
 
@@ -97,8 +104,8 @@ export const AddTodoDocument = gql`
 }
     `;
 export const GetTodosDocument = gql`
-    query GetTodos($term: String) {
-  todos(term: $term) {
+    query GetTodos($term: String, $sort: SortOrder) {
+  todos(term: $term, sort: $sort) {
     id
     text
     completed

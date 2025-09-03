@@ -3,9 +3,9 @@
 package graph
 
 import (
+	"astro-graphql-todo/server/graph/model"
 	"bytes"
 	"context"
-	"astro-graphql-todo/server/graph/model"
 	"embed"
 	"errors"
 	"fmt"
@@ -54,7 +54,7 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		Todos func(childComplexity int, term *string) int
+		Todos func(childComplexity int, term *string, sort *model.SortOrder) int
 	}
 
 	Todo struct {
@@ -70,7 +70,7 @@ type MutationResolver interface {
 	DeleteTodo(ctx context.Context, id string) (*bool, error)
 }
 type QueryResolver interface {
-	Todos(ctx context.Context, term *string) ([]*model.Todo, error)
+	Todos(ctx context.Context, term *string, sort *model.SortOrder) ([]*model.Todo, error)
 }
 
 type executableSchema struct {
@@ -138,7 +138,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Query.Todos(childComplexity, args["term"].(*string)), true
+		return e.complexity.Query.Todos(childComplexity, args["term"].(*string), args["sort"].(*model.SortOrder)), true
 
 	case "Todo.completed":
 		if e.complexity.Todo.Completed == nil {
@@ -341,6 +341,11 @@ func (ec *executionContext) field_Query_todos_args(ctx context.Context, rawArgs 
 		return nil, err
 	}
 	args["term"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "sort", ec.unmarshalOSortOrder2ᚖastroᚑgraphqlᚑtodoᚋserverᚋgraphᚋmodelᚐSortOrder)
+	if err != nil {
+		return nil, err
+	}
+	args["sort"] = arg1
 	return args, nil
 }
 
@@ -424,7 +429,7 @@ func (ec *executionContext) _Mutation_addTodo(ctx context.Context, field graphql
 	}
 	res := resTmp.(*model.Todo)
 	fc.Result = res
-	return ec.marshalNTodo2ᚖcycleᚑgraphqlᚑtodoᚋserverᚑgoᚋgraphᚋmodelᚐTodo(ctx, field.Selections, res)
+	return ec.marshalNTodo2ᚖastroᚑgraphqlᚑtodoᚋserverᚋgraphᚋmodelᚐTodo(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_addTodo(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -484,7 +489,7 @@ func (ec *executionContext) _Mutation_updateTodo(ctx context.Context, field grap
 	}
 	res := resTmp.(*model.Todo)
 	fc.Result = res
-	return ec.marshalOTodo2ᚖcycleᚑgraphqlᚑtodoᚋserverᚑgoᚋgraphᚋmodelᚐTodo(ctx, field.Selections, res)
+	return ec.marshalOTodo2ᚖastroᚑgraphqlᚑtodoᚋserverᚋgraphᚋmodelᚐTodo(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_updateTodo(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -585,7 +590,7 @@ func (ec *executionContext) _Query_todos(ctx context.Context, field graphql.Coll
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Todos(rctx, fc.Args["term"].(*string))
+		return ec.resolvers.Query().Todos(rctx, fc.Args["term"].(*string), fc.Args["sort"].(*model.SortOrder))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -599,7 +604,7 @@ func (ec *executionContext) _Query_todos(ctx context.Context, field graphql.Coll
 	}
 	res := resTmp.([]*model.Todo)
 	fc.Result = res
-	return ec.marshalNTodo2ᚕᚖcycleᚑgraphqlᚑtodoᚋserverᚑgoᚋgraphᚋmodelᚐTodoᚄ(ctx, field.Selections, res)
+	return ec.marshalNTodo2ᚕᚖastroᚑgraphqlᚑtodoᚋserverᚋgraphᚋmodelᚐTodoᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_todos(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -3417,11 +3422,11 @@ func (ec *executionContext) marshalNString2string(ctx context.Context, sel ast.S
 	return res
 }
 
-func (ec *executionContext) marshalNTodo2cycleᚑgraphqlᚑtodoᚋserverᚑgoᚋgraphᚋmodelᚐTodo(ctx context.Context, sel ast.SelectionSet, v model.Todo) graphql.Marshaler {
+func (ec *executionContext) marshalNTodo2astroᚑgraphqlᚑtodoᚋserverᚋgraphᚋmodelᚐTodo(ctx context.Context, sel ast.SelectionSet, v model.Todo) graphql.Marshaler {
 	return ec._Todo(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNTodo2ᚕᚖcycleᚑgraphqlᚑtodoᚋserverᚑgoᚋgraphᚋmodelᚐTodoᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Todo) graphql.Marshaler {
+func (ec *executionContext) marshalNTodo2ᚕᚖastroᚑgraphqlᚑtodoᚋserverᚋgraphᚋmodelᚐTodoᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Todo) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -3445,7 +3450,7 @@ func (ec *executionContext) marshalNTodo2ᚕᚖcycleᚑgraphqlᚑtodoᚋserver�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNTodo2ᚖcycleᚑgraphqlᚑtodoᚋserverᚑgoᚋgraphᚋmodelᚐTodo(ctx, sel, v[i])
+			ret[i] = ec.marshalNTodo2ᚖastroᚑgraphqlᚑtodoᚋserverᚋgraphᚋmodelᚐTodo(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -3465,7 +3470,7 @@ func (ec *executionContext) marshalNTodo2ᚕᚖcycleᚑgraphqlᚑtodoᚋserver�
 	return ret
 }
 
-func (ec *executionContext) marshalNTodo2ᚖcycleᚑgraphqlᚑtodoᚋserverᚑgoᚋgraphᚋmodelᚐTodo(ctx context.Context, sel ast.SelectionSet, v *model.Todo) graphql.Marshaler {
+func (ec *executionContext) marshalNTodo2ᚖastroᚑgraphqlᚑtodoᚋserverᚋgraphᚋmodelᚐTodo(ctx context.Context, sel ast.SelectionSet, v *model.Todo) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -3758,6 +3763,22 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 	return res
 }
 
+func (ec *executionContext) unmarshalOSortOrder2ᚖastroᚑgraphqlᚑtodoᚋserverᚋgraphᚋmodelᚐSortOrder(ctx context.Context, v any) (*model.SortOrder, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var res = new(model.SortOrder)
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOSortOrder2ᚖastroᚑgraphqlᚑtodoᚋserverᚋgraphᚋmodelᚐSortOrder(ctx context.Context, sel ast.SelectionSet, v *model.SortOrder) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return v
+}
+
 func (ec *executionContext) unmarshalOString2ᚖstring(ctx context.Context, v any) (*string, error) {
 	if v == nil {
 		return nil, nil
@@ -3776,7 +3797,7 @@ func (ec *executionContext) marshalOString2ᚖstring(ctx context.Context, sel as
 	return res
 }
 
-func (ec *executionContext) marshalOTodo2ᚖcycleᚑgraphqlᚑtodoᚋserverᚑgoᚋgraphᚋmodelᚐTodo(ctx context.Context, sel ast.SelectionSet, v *model.Todo) graphql.Marshaler {
+func (ec *executionContext) marshalOTodo2ᚖastroᚑgraphqlᚑtodoᚋserverᚋgraphᚋmodelᚐTodo(ctx context.Context, sel ast.SelectionSet, v *model.Todo) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
