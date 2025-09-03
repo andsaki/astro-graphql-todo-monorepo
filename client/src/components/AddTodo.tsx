@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useMutation } from "@apollo/client/react";
 import { gql } from "../lib/graphql";
-import { SortOrder } from "../generated/types";
+import { type TodoSortInput } from "../generated/types";
 import type {
   AddTodoMutation,
   AddTodoMutationVariables,
@@ -25,7 +25,7 @@ const ADD_TODO = gql`
  */
 interface AddTodoProps {
   term: string;
-  sort: SortOrder;
+  sort: TodoSortInput;
 }
 
 const AddTodo = ({ term, sort }: AddTodoProps) => {

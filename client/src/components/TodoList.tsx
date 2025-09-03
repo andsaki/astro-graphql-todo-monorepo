@@ -1,7 +1,11 @@
 import { useEffect } from "react";
 import { useQuery, useMutation } from "@apollo/client/react";
 import { gql } from "../lib/graphql";
-import { SortOrder } from "../generated/types";
+import {
+  SortOrder,
+  TodoSortField,
+  type TodoSortInput,
+} from "../generated/types";
 import type {
   GetTodosQuery,
   GetTodosQueryVariables,
@@ -12,7 +16,7 @@ import type {
 } from "../generated/types";
 
 export const GET_TODOS = gql`
-  query GetTodos($term: String, $sort: SortOrder) {
+  query GetTodos($term: String, $sort: TodoSortInput) {
     todos(term: $term, sort: $sort) {
       id
       text
@@ -40,11 +44,17 @@ interface TodoListProps {
   showSort?: boolean;
   term: string;
   setTerm: (term: string) => void;
-  sort: SortOrder;
-  setSort: (sort: SortOrder) => void;
+  sort: TodoSortInput;
+  setSort: (sort: TodoSortInput) => void;
 }
 
-const TodoList = ({ showSort = false, term, setTerm, sort, setSort }: TodoListProps) => {
+const TodoList = ({
+  showSort = false,
+  term,
+  setTerm,
+  sort,
+  setSort,
+}: TodoListProps) => {
   const { data, loading, error, refetch } = useQuery<
     GetTodosQuery,
     GetTodosQueryVariables
@@ -61,27 +71,51 @@ const TodoList = ({ showSort = false, term, setTerm, sort, setSort }: TodoListPr
   >(DELETE_TODO);
 
   useEffect(() => {
+    console.log("sort", sort);
     const debounce = setTimeout(() => {
       refetch({ term, sort });
-      const params = new URLSearchParams(window.location.search);
-      if (term) {
-        params.set("term", term);
-      } else {
-        params.delete("term");
-      }
-      if (sort) {
-        params.set("sort", sort);
-      } else {
-        params.delete("sort");
-      }
-      window.history.replaceState(
-        {},
-        "",
-        `${window.location.pathname}?${params}`
-      );
     }, 300);
     return () => clearTimeout(debounce);
   }, [term, sort, refetch]);
+
+  const updateUrl = (newTerm: string, newSort: TodoSortInput) => {
+    const params = new URLSearchParams(window.location.search);
+    if (newTerm) {
+      params.set("term", newTerm);
+    } else {
+      params.delete("term");
+    }
+    if (newSort) {
+      params.set("sortField", newSort.field);
+      params.set("sortOrder", newSort.order);
+    } else {
+      params.delete("sortField");
+      params.delete("sortOrder");
+    }
+    window.history.replaceState(
+      {},
+      "",
+      `${window.location.pathname}?${params}`
+    );
+  };
+
+  const handleTermChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newTerm = e.target.value;
+    setTerm(newTerm);
+    updateUrl(newTerm, sort);
+  };
+
+  const handleSortFieldChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newSort = { ...sort, field: e.target.value as TodoSortField };
+    setSort(newSort);
+    updateUrl(term, newSort);
+  };
+
+  const handleSortOrderChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newSort = { ...sort, order: e.target.value as SortOrder };
+    setSort(newSort);
+    updateUrl(term, newSort);
+  };
 
   const handleUpdateTodo = async (id: string, completed: boolean) => {
     try {
@@ -113,16 +147,19 @@ const TodoList = ({ showSort = false, term, setTerm, sort, setSort }: TodoListPr
           type="text"
           placeholder="Search todos"
           value={term}
-          onChange={(e) => setTerm(e.target.value)}
+          onChange={handleTermChange}
         />
         {showSort && (
-          <select
-            value={sort}
-            onChange={(e) => setSort(e.target.value as SortOrder)}
-          >
-            <option value={SortOrder.Asc}>Asc</option>
-            <option value={SortOrder.Desc}>Desc</option>
-          </select>
+          <>
+            <select value={sort.field} onChange={handleSortFieldChange}>
+              <option value={TodoSortField.Text}>Text</option>
+              <option value={TodoSortField.Completed}>Completed</option>
+            </select>
+            <select value={sort.order} onChange={handleSortOrderChange}>
+              <option value={SortOrder.Asc}>Asc</option>
+              <option value={SortOrder.Desc}>Desc</option>
+            </select>
+          </>
         )}
       </div>
       <ul>
