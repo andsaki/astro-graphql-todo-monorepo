@@ -45,7 +45,7 @@ const TodoList = () => {
 
   useEffect(() => {
     const debounce = setTimeout(() => {
-      refetch({ term });
+      refetch({ term }); // 検索条件に基づいてTodoリストを再フェッチします
     }, 300);
     return () => clearTimeout(debounce);
   }, [term, refetch]);
