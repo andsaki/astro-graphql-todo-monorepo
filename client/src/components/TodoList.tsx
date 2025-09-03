@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useQuery, useMutation } from "@apollo/client/react";
 import { gql } from "../lib/graphql";
 import { SortOrder } from "../generated/types";
@@ -38,29 +38,27 @@ const DELETE_TODO = gql`
 
 interface TodoListProps {
   showSort?: boolean;
+  term: string;
+  setTerm: (term: string) => void;
+  sort: SortOrder;
+  setSort: (sort: SortOrder) => void;
 }
 
-const TodoList = ({ showSort = false }: TodoListProps) => {
-  const [term, setTerm] = useState("");
-  const [sort, setSort] = useState<SortOrder>(SortOrder.Desc);
-
-  const { data, loading, error, refetch } = useQuery<GetTodosQuery, GetTodosQueryVariables>(GET_TODOS, {
+const TodoList = ({ showSort = false, term, setTerm, sort, setSort }: TodoListProps) => {
+  const { data, loading, error, refetch } = useQuery<
+    GetTodosQuery,
+    GetTodosQueryVariables
+  >(GET_TODOS, {
     variables: { term, sort },
   });
-  const [updateTodo] = useMutation<UpdateTodoMutation, UpdateTodoMutationVariables>(UPDATE_TODO);
-  const [deleteTodo] = useMutation<DeleteTodoMutation, DeleteTodoMutationVariables>(DELETE_TODO);
-
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const termFromUrl = params.get("term");
-    const sortFromUrl = params.get("sort");
-    if (termFromUrl) {
-      setTerm(termFromUrl);
-    }
-    if (sortFromUrl === SortOrder.Asc || sortFromUrl === SortOrder.Desc) {
-      setSort(sortFromUrl);
-    }
-  }, []);
+  const [updateTodo] = useMutation<
+    UpdateTodoMutation,
+    UpdateTodoMutationVariables
+  >(UPDATE_TODO);
+  const [deleteTodo] = useMutation<
+    DeleteTodoMutation,
+    DeleteTodoMutationVariables
+  >(DELETE_TODO);
 
   useEffect(() => {
     const debounce = setTimeout(() => {
@@ -76,7 +74,11 @@ const TodoList = ({ showSort = false }: TodoListProps) => {
       } else {
         params.delete("sort");
       }
-      window.history.replaceState({}, "", `${window.location.pathname}?${params}`);
+      window.history.replaceState(
+        {},
+        "",
+        `${window.location.pathname}?${params}`
+      );
     }, 300);
     return () => clearTimeout(debounce);
   }, [term, sort, refetch]);
@@ -114,7 +116,10 @@ const TodoList = ({ showSort = false }: TodoListProps) => {
           onChange={(e) => setTerm(e.target.value)}
         />
         {showSort && (
-          <select value={sort} onChange={(e) => setSort(e.target.value as SortOrder)}>
+          <select
+            value={sort}
+            onChange={(e) => setSort(e.target.value as SortOrder)}
+          >
             <option value={SortOrder.Asc}>Asc</option>
             <option value={SortOrder.Desc}>Desc</option>
           </select>

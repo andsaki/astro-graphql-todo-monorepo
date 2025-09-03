@@ -1,11 +1,13 @@
 import React, { useState } from "react";
 import { useMutation } from "@apollo/client/react";
 import { gql } from "../lib/graphql";
+import { SortOrder } from "../generated/types";
 import type {
   AddTodoMutation,
   AddTodoMutationVariables,
+  GetTodosQuery,
 } from "../generated/types";
-import { GET_TODOS } from './TodoList'; // Import GET_TODOS to refetch after adding
+import { GET_TODOS } from "./TodoList"; // Import GET_TODOS to update the cache
 
 const ADD_TODO = gql`
   mutation AddTodo($text: String!) {
@@ -21,12 +23,35 @@ const ADD_TODO = gql`
  * 新しいTODOアイテムを追加するためのコンポーネントです。
  * 入力フィールドと送信ボタンで構成されています。
  */
-const AddTodo = () => {
+interface AddTodoProps {
+  term: string;
+  sort: SortOrder;
+}
+
+const AddTodo = ({ term, sort }: AddTodoProps) => {
   const [text, setText] = useState("");
   const [addTodo] = useMutation<AddTodoMutation, AddTodoMutationVariables>(
     ADD_TODO,
     {
-      refetchQueries: [{ query: GET_TODOS }], // Refetch todos after adding
+      update(cache, { data }) {
+        if (!data) return;
+        const newTodo = data.addTodo;
+
+        const existingTodos = cache.readQuery<GetTodosQuery>({
+          query: GET_TODOS,
+          variables: { term, sort },
+        });
+
+        if (existingTodos && newTodo) {
+          cache.writeQuery({
+            query: GET_TODOS,
+            variables: { term, sort },
+            data: {
+              todos: [newTodo, ...existingTodos.todos],
+            },
+          });
+        }
+      },
     }
   );
 
