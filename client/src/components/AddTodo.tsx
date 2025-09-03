@@ -17,12 +17,23 @@ const ADD_TODO = gql`
   }
 `;
 
+/**
+ * 新しいTODOアイテムを追加するためのコンポーネントです。
+ * 入力フィールドと送信ボタンで構成されています。
+ */
 const AddTodo = () => {
   const [text, setText] = useState("");
-  const [addTodo] = useMutation<AddTodoMutation, AddTodoMutationVariables>(ADD_TODO, {
-    refetchQueries: [{ query: GET_TODOS }], // Refetch todos after adding
-  });
+  const [addTodo] = useMutation<AddTodoMutation, AddTodoMutationVariables>(
+    ADD_TODO,
+    {
+      refetchQueries: [{ query: GET_TODOS }], // Refetch todos after adding
+    }
+  );
 
+  /**
+   * フォームの送信を処理して、新しいTODOを追加します。
+   * @param e - フォームイベント。
+   */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!text.trim()) return;
