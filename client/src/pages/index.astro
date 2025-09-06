@@ -1,6 +1,7 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import App from '../components/App.tsx';
+import ErrorBoundaryWrapper from '../components/ErrorBoundary.tsx';
 import { SortOrder } from '../generated/types';
 
 const url = new URL(Astro.request.url);
@@ -19,6 +20,8 @@ const initialSort = getSortOrder(sortOrderParam);
 
 <Layout title="Todo App">
   <main>
-    <App client:load initialTerm={term} initialSort={initialSort} />
+    <ErrorBoundaryWrapper>
+      <App client:load initialTerm={term} initialSort={initialSort} />
+    </ErrorBoundaryWrapper>
   </main>
 </Layout>
