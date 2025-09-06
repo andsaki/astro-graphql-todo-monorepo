@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useQuery, useMutation } from "@apollo/client/react";
 import { gql } from "../lib/graphql";
-import { SortOrder, type TodoSortInput } from "../generated/types";
+import { SortOrder } from "../generated/types";
 import type {
   GetTodosQuery,
   GetTodosQueryVariables,
