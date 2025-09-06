@@ -123,9 +123,6 @@ const TodoList = ({
     }
   };
 
-  if (loading) return <p>Loading...</p>;
-  if (error) return <p>Error: {error.message}</p>;
-
   const todos = data?.todos || [];
 
   return (
@@ -146,7 +143,8 @@ const TodoList = ({
           </>
         )}
       </div>
-      <ul>
+      {error && <p>Error: {error.message}</p>}
+      <ul style={{ opacity: loading ? 0.5 : 1 }}>
         {todos.map((todo) => (
           <li key={todo.id}>
             <input

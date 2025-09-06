@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { useMutation } from "@apollo/client/react";
 import { gql } from "../lib/graphql";
 import { type SortOrder } from "../generated/types";
@@ -30,6 +30,7 @@ interface AddTodoProps {
 
 const AddTodo = ({ term, sort }: AddTodoProps) => {
   const [text, setText] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
   const [addTodo] = useMutation<AddTodoMutation, AddTodoMutationVariables>(
     ADD_TODO,
     {
@@ -66,6 +67,7 @@ const AddTodo = ({ term, sort }: AddTodoProps) => {
     try {
       await addTodo({ variables: { text } });
       setText("");
+      inputRef.current?.focus();
     } catch (error) {
       console.error("Error adding todo:", error);
     }
@@ -74,6 +76,7 @@ const AddTodo = ({ term, sort }: AddTodoProps) => {
   return (
     <form onSubmit={handleSubmit}>
       <input
+        ref={inputRef}
         type="text"
         value={text}
         onChange={(e) => setText(e.target.value)}
