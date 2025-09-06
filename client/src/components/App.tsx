@@ -3,20 +3,16 @@ import { ApolloProvider } from "@apollo/client/react";
 import { client } from "../lib/graphql";
 import TodoList from "./TodoList";
 import AddTodo from "./AddTodo";
-import {
-  type TodoSortInput,
-  SortOrder,
-  TodoSortField,
-} from "../generated/types";
+import { SortOrder } from "../generated/types";
 
 export interface AppProps {
   initialTerm: string;
-  initialSort: TodoSortInput;
+  initialSort: SortOrder;
 }
 
 const App: React.FC<AppProps> = ({ initialTerm, initialSort }) => {
   const [term, setTerm] = useState(initialTerm);
-  const [sort, setSort] = useState<TodoSortInput>(initialSort);
+  const [sort, setSort] = useState<SortOrder>(initialSort);
 
   console.log("initialTerm", initialTerm, initialSort);
 

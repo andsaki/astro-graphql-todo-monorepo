@@ -1,11 +1,7 @@
 import { useEffect } from "react";
 import { useQuery, useMutation } from "@apollo/client/react";
 import { gql } from "../lib/graphql";
-import {
-  SortOrder,
-  TodoSortField,
-  type TodoSortInput,
-} from "../generated/types";
+import { SortOrder, type TodoSortInput } from "../generated/types";
 import type {
   GetTodosQuery,
   GetTodosQueryVariables,
@@ -16,7 +12,7 @@ import type {
 } from "../generated/types";
 
 export const GET_TODOS = gql`
-  query GetTodos($term: String, $sort: TodoSortInput) {
+  query GetTodos($term: String, $sort: SortOrder) {
     todos(term: $term, sort: $sort) {
       id
       text
@@ -44,8 +40,8 @@ interface TodoListProps {
   showSort?: boolean;
   term: string;
   setTerm: (term: string) => void;
-  sort: TodoSortInput;
-  setSort: (sort: TodoSortInput) => void;
+  sort: SortOrder;
+  setSort: (sort: SortOrder) => void;
 }
 
 const TodoList = ({
@@ -78,7 +74,7 @@ const TodoList = ({
     return () => clearTimeout(debounce);
   }, [term, sort, refetch]);
 
-  const updateUrl = (newTerm: string, newSort: TodoSortInput) => {
+  const updateUrl = (newTerm: string, newSort: SortOrder) => {
     const params = new URLSearchParams(window.location.search);
     if (newTerm) {
       params.set("term", newTerm);
@@ -86,10 +82,8 @@ const TodoList = ({
       params.delete("term");
     }
     if (newSort) {
-      params.set("sortField", newSort.field);
-      params.set("sortOrder", newSort.order);
+      params.set("sortOrder", newSort);
     } else {
-      params.delete("sortField");
       params.delete("sortOrder");
     }
     window.history.replaceState(
@@ -105,14 +99,8 @@ const TodoList = ({
     updateUrl(newTerm, sort);
   };
 
-  const handleSortFieldChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const newSort = { ...sort, field: e.target.value as TodoSortField };
-    setSort(newSort);
-    updateUrl(term, newSort);
-  };
-
   const handleSortOrderChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const newSort = { ...sort, order: e.target.value as SortOrder };
+    const newSort = e.target.value as SortOrder;
     setSort(newSort);
     updateUrl(term, newSort);
   };
@@ -151,11 +139,7 @@ const TodoList = ({
         />
         {showSort && (
           <>
-            <select value={sort.field} onChange={handleSortFieldChange}>
-              <option value={TodoSortField.Text}>Text</option>
-              <option value={TodoSortField.Completed}>Completed</option>
-            </select>
-            <select value={sort.order} onChange={handleSortOrderChange}>
+            <select value={sort} onChange={handleSortOrderChange}>
               <option value={SortOrder.Asc}>Asc</option>
               <option value={SortOrder.Desc}>Desc</option>
             </select>

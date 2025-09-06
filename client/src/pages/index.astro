@@ -1,19 +1,11 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import App from '../components/App.tsx';
-import { SortOrder, TodoSortField } from '../generated/types';
+import { SortOrder } from '../generated/types';
 
 const url = new URL(Astro.request.url);
 const term = url.searchParams.get("term") || "";
-const sortFieldParam = url.searchParams.get("sortField") || "TEXT";
 const sortOrderParam = url.searchParams.get("sortOrder") || "DESC";
-
-const getSortField = (param: string) => {
-  if (param.toUpperCase() === 'COMPLETED') {
-    return TodoSortField.Completed;
-  }
-  return TodoSortField.Text;
-}
 
 const getSortOrder = (param: string) => {
   if (param.toUpperCase() === 'ASC') {
@@ -22,10 +14,7 @@ const getSortOrder = (param: string) => {
   return SortOrder.Desc;
 }
 
-const initialSort = {
-  field: getSortField(sortFieldParam),
-  order: getSortOrder(sortOrderParam),
-};
+const initialSort = getSortOrder(sortOrderParam);
 ---
 
 <Layout title="Todo App">
