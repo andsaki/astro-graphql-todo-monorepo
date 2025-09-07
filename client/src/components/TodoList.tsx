@@ -11,15 +11,7 @@ import type {
   DeleteTodoMutationVariables,
 } from "../generated/types";
 
-export const GET_TODOS = gql`
-  query GetTodos($term: String, $sort: SortOrder) {
-    todos(term: $term, sort: $sort) {
-      id
-      text
-      completed
-    }
-  }
-`;
+import { GET_TODOS } from "../graphql/queries";
 
 const UPDATE_TODO = gql`
   mutation UpdateTodo($id: ID!, $completed: Boolean!) {

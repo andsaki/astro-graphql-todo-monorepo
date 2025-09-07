@@ -7,7 +7,7 @@ import type {
   AddTodoMutationVariables,
   GetTodosQuery,
 } from "../generated/types";
-import { GET_TODOS } from "./TodoList"; // Import GET_TODOS to update the cache
+import { GET_TODOS } from "../graphql/queries"; // Import GET_TODOS to update the cache
 
 const ADD_TODO = gql`
   mutation AddTodo($text: String!) {
