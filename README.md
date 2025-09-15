@@ -5,6 +5,7 @@
 ## 主な機能
 
 - Todo の追加、表示、管理
+- Todo の検索とソート (昇順/降順)
 - データ取得と操作のための GraphQL API
 - Astro と React で構築されたフロントエンド
 
@@ -17,8 +18,9 @@
   - [React](https://react.dev/)
   - [GraphQL Request](https://github.com/prisma-labs/graphql-request)
   - [GraphQL Code Generator](https://www.graphql-code-generator.com/)
+  - [@apollo/client](https://www.apollographql.com/docs/react/) (GraphQL クライアント)
 - **バックエンド:**
-  - [Go](https://go.dev/)
+  - [Go](https://go.dev/) (v1.23.0 以降を推奨)
   - [gqlgen](https://gqlgen.com/) (GraphQL サーバーライブラリ)
   - [sqlc](https://sqlc.dev/) (Go 用の型安全な SQL)
   - [go-sqlite3](https://github.com/mattn/go-sqlite3) (SQLite ドライバ)
@@ -35,7 +37,7 @@
 ### 前提条件
 
 - [Volta](https://volta.sh/) (Node.js と pnpm のバージョンを自動で管理します)
-- [Go](https://go.dev/) (v1.21 以降を推奨)
+- [Go](https://go.dev/) (v1.23.0 以降を推奨)
 - [sqlc](https://sqlc.dev/) (Go 用の型安全な SQL を生成するために必要です)
   - `go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest` でインストールできます。
 
@@ -77,8 +79,8 @@ pnpm run dev
 - `pnpm run build`: 本番用にクライアントアプリケーションをビルドします。
 - `pnpm run preview`: 本番ビルドをローカルでプレビューします。
 - `pnpm run generate`: スキーマに基づいて GraphQL の型を生成します。
+- `pnpm run test`: Vitest を使用してテストを実行します。
 
-### サーバー (`/server-go`)
+### サーバー (`/server`)
 
-- `go run server.go`: Go GraphQL サーバーを起動します。
-  (通常は `pnpm run dev` で起動されるため、直接実行する必要はありません。)
+- `go run server.go`: Go GraphQL サーバーを起動します。(通常は `pnpm run dev` で起動されるため、直接実行する必要はありません。)
