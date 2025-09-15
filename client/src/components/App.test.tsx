@@ -4,6 +4,7 @@ import App from "./App";
 import { SortOrder } from "../generated/types";
 import { GET_TODOS } from "../graphql/queries";
 import { GraphQLError } from "graphql";
+import ClientRoot from "./ClientRoot";
 
 // モックデータ
 const mocks = {
@@ -132,5 +133,13 @@ describe("App", () => {
 
     // "Error: Error fetching data"が表示されるのを待つ
     expect(await screen.findByText(/Error: /)).toBeInTheDocument();
+  });
+
+  it('ClientRootがエラーなく正常にAppコンポーネントを表示すること', () => {
+    render(<ClientRoot initialTerm="" initialSort={SortOrder.Asc} />);
+    // Appコンポーネントの中身である「Todo App」というテキストが表示されることを確認
+    expect(screen.getByText('Todo App')).toBeInTheDocument();
+    // フォールバックUIが表示されていないことを確認
+    expect(screen.queryByText("Something went wrong:")).not.toBeInTheDocument();
   });
 });
