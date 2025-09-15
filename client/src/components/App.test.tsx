@@ -3,6 +3,7 @@ import { MockedProvider } from "@apollo/client/testing/react";
 import App from "./App";
 import { SortOrder } from "../generated/types";
 import { GET_TODOS } from "../graphql/queries";
+import { ADD_TODO } from "../graphql/mutations";
 import { GraphQLError } from "graphql";
 import ClientRoot from "./ClientRoot";
 
@@ -141,5 +142,63 @@ describe("App", () => {
     expect(screen.getByText('Todo App')).toBeInTheDocument();
     // フォールバックUIが表示されていないことを確認
     expect(screen.queryByText("Something went wrong:")).not.toBeInTheDocument();
+  });
+
+  it('新しいTodoを入力して追加ボタンを押すと、リストにTodoが追加されること', async () => {
+    const newTodoText = '新しいTodoタスク';
+
+    // 1. 初期表示時はTodoが空であるというモック
+    const getTodosMockEmpty = {
+      request: {
+        query: GET_TODOS,
+        variables: { term: '', sort: SortOrder.Asc },
+      },
+      result: {
+        data: {
+          todos: [],
+        },
+      },
+    };
+
+    // 2. addTodoミューテーションが呼ばれた際のモック
+    const addTodoMutationMock = {
+      request: {
+        query: ADD_TODO,
+        variables: { text: newTodoText },
+      },
+      result: {
+        data: {
+          addTodo: {
+            id: '3',
+            text: newTodoText,
+            completed: false,
+            __typename: 'Todo',
+          },
+        },
+      },
+    };
+
+    const mocks = [getTodosMockEmpty, addTodoMutationMock];
+
+    render(
+      <MockedProvider mocks={mocks}>
+        <ClientRoot initialTerm="" initialSort={SortOrder.Asc} />
+      </MockedProvider>
+    );
+
+    // 初期状態ではリストが空であることを確認
+    await waitFor(() => {
+      expect(screen.queryByRole('listitem')).toBeNull();
+    });
+
+    // フォームの入力と送信
+    const input = screen.getByPlaceholderText('Add a new todo');
+    const addButton = screen.getByRole('button', { name: 'Add' });
+
+    fireEvent.change(input, { target: { value: newTodoText } });
+    fireEvent.click(addButton);
+
+    // 新しいTodoがリストに表示されるのを待つ
+    expect(await screen.findByText(newTodoText)).toBeInTheDocument();
   });
 });

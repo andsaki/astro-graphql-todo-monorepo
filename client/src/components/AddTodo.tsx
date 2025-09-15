@@ -8,16 +8,7 @@ import type {
   GetTodosQuery,
 } from "../generated/types";
 import { GET_TODOS } from "../graphql/queries"; // Import GET_TODOS to update the cache
-
-const ADD_TODO = gql`
-  mutation AddTodo($text: String!) {
-    addTodo(text: $text) {
-      id
-      text
-      completed
-    }
-  }
-`;
+import { ADD_TODO } from "../graphql/mutations";
 
 /**
  * 新しいTODOアイテムを追加するためのコンポーネントです。
