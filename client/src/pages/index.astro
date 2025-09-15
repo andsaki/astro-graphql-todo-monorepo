@@ -1,8 +1,9 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import App from '../components/App.tsx';
-import ErrorBoundaryWrapper from '../components/ErrorBoundary.tsx';
+
 import { SortOrder } from '../generated/types';
+
+import ClientRoot from '../components/ClientRoot.tsx';
 
 const url = new URL(Astro.request.url);
 const term = url.searchParams.get("term") || "";
@@ -20,8 +21,6 @@ const initialSort = getSortOrder(sortOrderParam);
 
 <Layout title="Todo App">
   <main>
-    <ErrorBoundaryWrapper>
-      <App client:load initialTerm={term} initialSort={initialSort} />
-    </ErrorBoundaryWrapper>
+    <ClientRoot client:load initialTerm={term} initialSort={initialSort} />
   </main>
 </Layout>
