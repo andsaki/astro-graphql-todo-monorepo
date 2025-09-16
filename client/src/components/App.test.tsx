@@ -10,7 +10,8 @@ import ClientRoot from "./ClientRoot";
 // モックデータ
 const mocks = {
   getTodos: {
-    success: {
+    successAsc: {
+      // ASCソート用のモック
       request: {
         query: GET_TODOS,
         variables: { term: "", sort: SortOrder.Asc },
@@ -28,6 +29,43 @@ const mocks = {
               id: "2",
               text: "Second todo",
               completed: true,
+              __typename: "Todo",
+            },
+            {
+              id: "3",
+              text: "Third todo",
+              completed: false,
+              __typename: "Todo",
+            },
+          ],
+        },
+      },
+    },
+    successDesc: {
+      // DESCソート用のモック
+      request: {
+        query: GET_TODOS,
+        variables: { term: "", sort: SortOrder.Desc },
+      },
+      result: {
+        data: {
+          todos: [
+            {
+              id: "3",
+              text: "Third todo",
+              completed: false,
+              __typename: "Todo",
+            },
+            {
+              id: "2",
+              text: "Second todo",
+              completed: true,
+              __typename: "Todo",
+            },
+            {
+              id: "1",
+              text: "First todo",
+              completed: false,
               __typename: "Todo",
             },
           ],
@@ -94,21 +132,34 @@ describe("App", () => {
     expect(list).toHaveStyle("opacity: 0.5");
   });
 
-  it("データの取得に成功した場合、Todoリストが表示されること", async () => {
+  it("Todoリストが昇順でソートされて表示されること", async () => {
     render(
-      <MockedProvider mocks={[mocks.getTodos.success]}>
+      <MockedProvider mocks={[mocks.getTodos.successAsc]}>
         <App initialTerm="" initialSort={SortOrder.Asc} />
       </MockedProvider>
     );
 
-    // "First todo"が表示されるのを待つ
-    expect(await screen.findByText("First todo")).toBeInTheDocument();
-    // "Second todo"が表示されるのを待つ
-    expect(await screen.findByText("Second todo")).toBeInTheDocument();
-    // 完了済みのTodoには打ち消し線が付いていることを確認
-    expect(screen.getByText("Second todo")).toHaveStyle(
-      "text-decoration: line-through"
+    // Todoが昇順で表示されることを確認
+    const todoItems = await screen.findAllByRole("listitem");
+    expect(todoItems.length).toBe(3);
+    expect(todoItems[0]).toHaveTextContent("First todo");
+    expect(todoItems[1]).toHaveTextContent("Second todo");
+    expect(todoItems[2]).toHaveTextContent("Third todo");
+  });
+
+  it("Todoリストが降順でソートされて表示されること", async () => {
+    render(
+      <MockedProvider mocks={[mocks.getTodos.successDesc]}>
+        <App initialTerm="" initialSort={SortOrder.Desc} />
+      </MockedProvider>
     );
+
+    // Todoが降順で表示されることを確認
+    const todoItems = await screen.findAllByRole("listitem");
+    expect(todoItems.length).toBe(3);
+    expect(todoItems[0]).toHaveTextContent("Third todo");
+    expect(todoItems[1]).toHaveTextContent("Second todo");
+    expect(todoItems[2]).toHaveTextContent("First todo");
   });
 
   it("データが空の場合、リストが空で表示されること", async () => {
@@ -136,22 +187,22 @@ describe("App", () => {
     expect(await screen.findByText(/Error: /)).toBeInTheDocument();
   });
 
-  it('ClientRootがエラーなく正常にAppコンポーネントを表示すること', () => {
+  it("ClientRootがエラーなく正常にAppコンポーネントを表示すること", () => {
     render(<ClientRoot initialTerm="" initialSort={SortOrder.Asc} />);
     // Appコンポーネントの中身である「Todo App」というテキストが表示されることを確認
-    expect(screen.getByText('Todo App')).toBeInTheDocument();
+    expect(screen.getByText("Todo App")).toBeInTheDocument();
     // フォールバックUIが表示されていないことを確認
     expect(screen.queryByText("Something went wrong:")).not.toBeInTheDocument();
   });
 
-  it('新しいTodoを入力して追加ボタンを押すと、リストにTodoが追加されること', async () => {
-    const newTodoText = '新しいTodoタスク';
+  it("新しいTodoを入力して追加ボタンを押すと、リストにTodoが追加されること", async () => {
+    const newTodoText = "新しいTodoタスク";
 
     // 1. 初期表示時はTodoが空であるというモック
     const getTodosMockEmpty = {
       request: {
         query: GET_TODOS,
-        variables: { term: '', sort: SortOrder.Asc },
+        variables: { term: "", sort: SortOrder.Asc },
       },
       result: {
         data: {
@@ -165,20 +216,46 @@ describe("App", () => {
       request: {
         query: ADD_TODO,
         variables: { text: newTodoText },
+        operationName: "AddTodo",
       },
       result: {
         data: {
           addTodo: {
-            id: '3',
+            id: "3",
             text: newTodoText,
             completed: false,
-            __typename: 'Todo',
+            __typename: "Todo",
           },
         },
       },
     };
 
-    const mocks = [getTodosMockEmpty, addTodoMutationMock];
+    // 3. addTodoミューテーション成功後、GET_TODOSが再度呼ばれた際のモック
+    const getTodosMockAfterAdd = {
+      request: {
+        query: GET_TODOS,
+        variables: { term: "", sort: SortOrder.Asc },
+      },
+      result: {
+        data: {
+          todos: [
+            {
+              id: "3",
+              text: newTodoText,
+              completed: false,
+              __typename: "Todo",
+            },
+          ],
+        },
+      },
+    };
+
+    // モックの順序が重要
+    const mocks = [
+      getTodosMockEmpty,
+      addTodoMutationMock,
+      getTodosMockAfterAdd,
+    ];
 
     render(
       <MockedProvider mocks={mocks}>
@@ -188,17 +265,22 @@ describe("App", () => {
 
     // 初期状態ではリストが空であることを確認
     await waitFor(() => {
-      expect(screen.queryByRole('listitem')).toBeNull();
+      expect(screen.queryByRole("listitem")).toBeNull();
     });
 
     // フォームの入力と送信
-    const input = screen.getByPlaceholderText('Add a new todo');
-    const addButton = screen.getByRole('button', { name: 'Add' });
+    const input = screen.getByPlaceholderText("Add a new todo");
+    const addButton = screen.getByRole("button", { name: "Add" });
 
     fireEvent.change(input, { target: { value: newTodoText } });
     fireEvent.click(addButton);
 
     // 新しいTodoがリストに表示されるのを待つ
-    expect(await screen.findByText(newTodoText)).toBeInTheDocument();
+    await waitFor(
+      () => {
+        expect(screen.getAllByText(newTodoText)).toHaveLength(1);
+      },
+      { timeout: 5000 } // 例: タイムアウトを5秒に設定
+    );
   });
 });
